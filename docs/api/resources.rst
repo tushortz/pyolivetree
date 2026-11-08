@@ -1,22 +1,14 @@
 Resources
 =========
 
-.. automodule:: pyolivetree.resources.store
-   :members:
-   :undoc-members:
-
 .. automodule:: pyolivetree.resources.account
-   :members:
-   :undoc-members:
-
+.. automodule:: pyolivetree.resources.store
+.. automodule:: pyolivetree.resources.products
 .. automodule:: pyolivetree.resources.sync
-   :members:
-   :undoc-members:
-
-.. automodule:: pyolivetree.resources.smart_search
-   :members:
-   :undoc-members:
-
-.. automodule:: pyolivetree.resources.analytics
-   :members:
-   :undoc-members:
+.. automodule:: pyolivetree.resources.ai
+.. automodule:: pyolivetree.resources.reading
+.. automodule:: pyolivetree.resources.media
+.. automodule:: pyolivetree.resources.messages
+.. automodule:: pyolivetree.resources.telemetry
+.. automodule:: pyolivetree.resources.web
+.. automodule:: pyolivetree.resources.firebase

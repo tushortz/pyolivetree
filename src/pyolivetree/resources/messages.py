@@ -1,144 +1,46 @@
-"""Generated messages API resource."""
+"""In-app message center."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pyolivetree._operations import OPERATIONS
+from pyolivetree.constants import WWW
+from pyolivetree.resources._base import Resource
 
-if TYPE_CHECKING:
-    from pyolivetree.async_client import AsyncOliveTreeClient
-    from pyolivetree.client import OliveTreeClient
+_BASE = f"{WWW}/api/messages/v1"
 
 
-class MessagesResource:
-    """Resource methods for the Olive Tree API."""
+class Messages(Resource):
+    """Available as ``ot.messages``. Requests are HMAC-signed.
 
-    def __init__(self, client: OliveTreeClient | AsyncOliveTreeClient) -> None:
-        self._client = client
+    The server answers 401 until the device is registered with :meth:`register_device`.
+    """
 
-    def list(self, install_id: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - messages.php.
+    def list(self) -> Any:
+        """Messages for this device."""
+        return self._c.request(
+            "POST",
+            f"{_BASE}/messages.php",
+            sign="telemetry",
+            auth=False,
+            json={"install_id": self._c.device_id},
+        )
 
-        Args:
-            See method parameters for path, query, and body fields.
+    def register_device(self, **body: Any) -> Any:
+        """Register this device for messages. Body fields are not documented."""
+        return self._c.request("POST", f"{_BASE}/devices.php", json=body, sign="telemetry", auth=False)
 
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["messages_list"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"install_id": install_id}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def alist(self, install_id: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - messages.php.
+    def metrics(self, message_id: int, metrics: dict) -> Any:
+        """Report that a message was seen/clicked.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            message_id: Message id from :meth:`list`.
+            metrics: Metric values to report.
         """
-        spec = OPERATIONS["messages_list"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"install_id": install_id}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def devices(self, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - devices.php.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["messages_devices"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def adevices(self, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - devices.php.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["messages_devices"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def metrics(self, install_id: Any = None, message_id: Any = None, metrics: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - metrics.php.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["messages_metrics"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"install_id": install_id, "message_id": message_id, "metrics": metrics}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def ametrics(self, install_id: Any = None, message_id: Any = None, metrics: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Messages API - metrics.php.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["messages_metrics"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"install_id": install_id, "message_id": message_id, "metrics": metrics}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request(
+            "POST",
+            f"{_BASE}/metrics.php",
+            sign="telemetry",
+            auth=False,
+            json={"install_id": self._c.device_id, "message_id": message_id, "metrics": metrics},
+        )

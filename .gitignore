@@ -1,4 +1,3 @@
-*.apk
 .env
 .env.*
 !.env.example
@@ -19,3 +18,8 @@ results/
 scripts/
 
 .DS_Store
+notes.md
+highlights.md
+clips.md
+*.db
+.vscode/

@@ -1,32 +1,36 @@
-"""Sphinx configuration for pyolivetree."""
+"""Sphinx configuration."""
 
-from __future__ import annotations
-
+import os
 import sys
-from pathlib import Path
+from importlib.metadata import version as _version
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, os.path.abspath("../src"))
 
 project = "pyolivetree"
-author = "pyolivetree contributors"
-copyright = "2026, pyolivetree contributors"
-release = "1.0.0"
+author = "Taiwo Kareem"
+copyright = "2026, Taiwo Kareem"
+try:
+    release = _version("pyolivetree")
+except Exception:
+    release = "2.0.0"
+version = release
 
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx_autodoc_typehints",
+    "sphinx.ext.intersphinx",
 ]
-
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-html_theme = "alabaster"
-html_static_path = ["_static"]
-
-suppress_warnings = ["ref.python"]
-
 autodoc_member_order = "bysource"
+autodoc_typehints = "description"
+autodoc_default_options = {"members": True, "show-inheritance": False}
 napoleon_google_docstring = True
-typehints_defaults = "comma"
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+}
+nitpicky = False
+
+html_theme = "furo"
+html_title = f"pyolivetree {release}"
+html_static_path = ["_static"]
+exclude_patterns = ["_build"]

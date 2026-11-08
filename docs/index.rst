@@ -1,27 +1,34 @@
 pyolivetree
 ===========
 
-Python client for the Olive Tree Bible Reader API.
+Python client for the **Olive Tree Bible**. Pull your notes and highlights, browse your library, query Smart Search AI, and call any
+Olive Tree endpoint.
+
+.. code-block:: python
+
+   from pyolivetree import OliveTree
+
+   with OliveTree() as ot:
+       for row in ot.sync.pull("annotations"):
+           print(row["datum"].get("title"), row["datum"].get("content"))
 
 .. toctree::
    :maxdepth: 2
-   :caption: Manual
+   :caption: Guide
 
    manual/installation
-   manual/authentication
+   quickstart
    manual/usage
+   manual/authentication
+   endpoints
+   notes
    manual/limitations
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: API reference
 
    api/client
    api/resources
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api/notes
+   api/internals

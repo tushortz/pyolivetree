@@ -1,23 +1,28 @@
 openapi: 3.0.3
 info:
   title: Olive Tree Bible Reader API
-  description: 'Reverse-engineered OpenAPI specification from the decompiled Olive Tree Bible Reader Android client (biblereader.olivetree).
+  description: 'OpenAPI description of the Olive Tree Bible Reader APIs used by pyolivetree.
 
 
-    **Limitations:**
+    **Notes:**
 
-    - Request/response shapes reflect client expectations; servers may accept additional fields.
+
+    - Request/response shapes are not officially documented; servers may accept additional fields.
+
 
     - Dynamic store paths (resource guide, RC sections) use server-driven URL suffixes.
 
-    - HMAC `signature` header requires device-specific key from otTelemetry/HMACVerification.
+
+    - HMAC `signature` header is an uppercase-hex HMAC-SHA512 of the request body.
+
 
     - DRM license URLs are fetched dynamically from media manifests.
+
 
     - Most store endpoints use POST with application/x-www-form-urlencoded bodies.
 
     '
-  version: 1.0.0
+  version: 2.0.0
   contact:
     name: Olive Tree
     url: https://www.olivetree.com
@@ -42,8 +47,6 @@ servers:
   description: Static CDN assets
 - url: https://media.olivetree.com
   description: Legacy media images
-- url: https://admin.olivetree.com
-  description: Internal admin API
 - url: https://help.olivetree.com
   description: Help center (browser)
 - url: https://biblereader-android-df00f.firebaseio.com
@@ -77,8 +80,6 @@ tags:
   description: Legacy media host
 - name: Static
   description: Static JSON assets on www
-- name: Admin
-  description: Internal admin endpoints
 - name: Browser
   description: Browser-only redirect and web pages
 - name: Firebase
@@ -1994,37 +1995,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericJsonObject'
-  /projects/bookformatting/reading_template_for_product.php:
-    post:
-      operationId: admin_reading_template
-      tags:
-      - Admin
-      summary: Create reading template for product (internal)
-      security:
-      - JenkinsBasicAuth: []
-      servers:
-      - url: https://admin.olivetree.com
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                product_id:
-                  type: integer
-                  format: int64
-                create:
-                  type: string
-                  enum:
-                  - 'yes'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericJsonObject'
   /store/br5/app_to_web_bridge.php:
     get:
       operationId: browser_app_to_web_bridge
@@ -2153,7 +2123,7 @@ paths:
       operationId: browser_help_articles
       tags:
       - Browser
-      summary: Help center Android articles
+      summary: Help center app articles
       security: []
       servers:
       - url: https://help.olivetree.com
@@ -2228,6 +2198,174 @@ paths:
             text/html:
               schema:
                 type: string
+  /syncables.json:
+    get:
+      operationId: sync_pull
+      tags:
+      - Sync
+      summary: Rows changed after a sequence number
+      servers: &id013
+      - url: https://sync.olivetree.com
+      security: &id014
+      - OTBearerAuth: []
+      parameters:
+      - name: device_id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: platform_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: above
+        in: query
+        required: true
+        schema:
+          type: integer
+      - name: managed_data_set
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: sync_client_protocol_version
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: reader_version
+        in: query
+        required: false
+        schema:
+          type: string
+      responses: &id015
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  /syncables/get_table_schema/{managedDataSet}/{tableName}/{tableVersion}.json:
+    get:
+      operationId: sync_table_schema
+      tags:
+      - Sync
+      summary: SQLite schema for a synced table
+      servers: *id013
+      security: *id014
+      parameters:
+      - name: managedDataSet
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableName
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableVersion
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: sync_client_protocol_version
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses: *id015
+  /syncables/syncitem.json:
+    post:
+      operationId: sync_push
+      tags:
+      - Sync
+      summary: Create or update one synced row
+      servers: *id013
+      security: *id014
+      parameters:
+      - name: release_lock
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sync_client_protocol_version
+        in: query
+        required: false
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_id:
+                  type: string
+                device_model:
+                  type: string
+                device_os:
+                  type: string
+                sync_client_protocol_version:
+                  type: integer
+                managed_data_set:
+                  type: string
+                table_name:
+                  type: string
+                deleted:
+                  type: integer
+                id:
+                  type: integer
+                customer_id:
+                  type: integer
+                sequence_number:
+                  type: integer
+                datum:
+                  type: object
+      responses: *id015
+  /store/br5/app/json/store/validate_google_in_app_purchase:
+    post:
+      operationId: store_validate_google_in_app_purchase
+      tags:
+      - Store
+      summary: Validate a Google Play purchase
+      security:
+      - OTBearerAuth: []
+      - BasicAuth: []
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+      responses: *id015
+  /media/content/{contentId}/{name}/stream.mpd:
+    get:
+      operationId: media_stream
+      tags:
+      - Media
+      summary: MPEG-DASH manifest for owned media
+      security: *id014
+      parameters:
+      - name: contentId
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/dash+xml:
+              schema:
+                type: string
 components:
   securitySchemes:
     OTBearerAuth:
@@ -2244,10 +2382,6 @@ components:
       in: header
       name: signature
       description: HMAC hex digest of raw request body. Key derived from device telemetry.
-    JenkinsBasicAuth:
-      type: http
-      scheme: basic
-      description: Internal Jenkins credentials for admin endpoints
   schemas:
     ErrorResponse:
       type: object

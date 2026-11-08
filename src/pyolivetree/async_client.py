@@ -1,200 +1,107 @@
-"""Asynchronous Olive Tree API client."""
+"""The :class:`AsyncOliveTree` client: the same API as :class:`~pyolivetree.OliveTree`, with ``await``."""
 
 from __future__ import annotations
 
+import asyncio
+import functools
+import inspect
 from typing import Any
 
-from pyolivetree._transport.async_ import AsyncTransport
-from pyolivetree.auth import AuthManager
-from pyolivetree.config import ClientConfig
-from pyolivetree.resources import (
-    AccountResource,
-    AdminResource,
-    AnalyticsResource,
-    BrowserResource,
-    CdnResource,
-    FirebaseResource,
-    LegacyResource,
-    MediaResource,
-    MessagesResource,
-    PrivacyResource,
-    SmartSearchResource,
-    SpeechResource,
-    StaticResource,
-    StoreResource,
-    StoreXmlResource,
-    SyncResource,
-    VotdResource,
+from pyolivetree.client import OliveTree
+
+#: Endpoint groups mirrored from :class:`~pyolivetree.OliveTree`.
+GROUPS = (
+    "account",
+    "store",
+    "products",
+    "sync",
+    "ai",
+    "reading",
+    "media",
+    "messages",
+    "telemetry",
+    "web",
+    "firebase",
 )
 
 
-class AsyncOliveTreeClient:
-    """Asynchronous client for the Olive Tree Bible Reader API."""
+class AsyncGroup:
+    """Async view of one endpoint group. Every method becomes a coroutine.
 
-    def __init__(
-        self,
-        *,
-        username: str | None = None,
-        password: str | None = None,
-        install_id: str | None = None,
-        access_token: str | None = None,
-        refresh_token: str | None = None,
-        hmac_key: str | bytes | None = None,
-        timeout: float = 30.0,
-        base_url: str = "https://www.olivetree.com",
-        config: ClientConfig | None = None,
-    ) -> None:
-        """Initialize the asynchronous client.
+    Methods that yield (``sync.pull``, ``store.all_products``) return a list instead.
+    The 1.x names with an ``a`` prefix (``ahome``, ``asearch``) also work.
+    """
 
-        Args:
-            username: Olive Tree account email.
-            password: Olive Tree account password.
-            install_id: Device install identifier.
-            access_token: Optional bearer token to restore an in-memory session.
-            refresh_token: Optional refresh token to restore an in-memory session.
-            hmac_key: HMAC signing key for signed endpoints.
-            timeout: Request timeout in seconds.
-            base_url: Default API base URL.
-            config: Pre-built configuration object. Overrides other args if set.
+    def __init__(self, group: Any) -> None:
+        self._group = group
 
-        Returns:
-            None.
+    def __getattr__(self, name: str) -> Any:
+        fn = getattr(self._group, name, None)
+        if fn is None and name.startswith("a"):
+            fn = getattr(self._group, name[1:], None)
+        if fn is None:
+            raise AttributeError(name)
+        if not callable(fn):
+            return fn
 
-        Raises:
-            ValueError: If hmac_key encoding is invalid.
-        """
-        self._config = config or ClientConfig.from_env(
-            username=username,
-            password=password,
-            install_id=install_id,
-            hmac_key=hmac_key,
-            timeout=timeout,
-            base_url=base_url,
-        )
-        self._auth = AuthManager(
-            self._config,
-            access_token=access_token,
-            refresh_token=refresh_token,
-        )
-        self._transport = AsyncTransport(self._auth, timeout=self._config.timeout)
-        self.store = StoreResource(self)
-        self.account = AccountResource(self)
-        self.store_xml = StoreXmlResource(self)
-        self.legacy = LegacyResource(self)
-        self.messages = MessagesResource(self)
-        self.smart_search = SmartSearchResource(self)
-        self.sync = SyncResource(self)
-        self.analytics = AnalyticsResource(self)
-        self.privacy = PrivacyResource(self)
-        self.speech = SpeechResource(self)
-        self.votd = VotdResource(self)
-        self.cdn = CdnResource(self)
-        self.media = MediaResource(self)
-        self.static = StaticResource(self)
-        self.admin = AdminResource(self)
-        self.browser = BrowserResource(self)
-        self.firebase = FirebaseResource(self)
+        @functools.wraps(fn)
+        async def call(*args: Any, **kwargs: Any) -> Any:
+            if inspect.isgeneratorfunction(fn):
+                return await asyncio.to_thread(lambda: list(fn(*args, **kwargs)))
+            return await asyncio.to_thread(fn, *args, **kwargs)
 
-    async def login(self, **kwargs: Any) -> dict[str, Any]:
-        """Authenticate and cache bearer tokens.
+        return call
 
-        Args:
-            **kwargs: Optional overrides for user, pass, install_id, and other login fields.
 
-        Returns:
-            Parsed account authentication response.
+class AsyncOliveTree:
+    """Async client. Takes the same arguments as :class:`~pyolivetree.OliveTree`.
 
-        Raises:
-            OliveTreeAuthError: If login fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        payload = {
-            "user": kwargs.get("user", self._config.username),
-            "pass": kwargs.get("pass", kwargs.get("password", self._config.password)),
-            "install_id": kwargs.get("install_id", self._config.install_id),
-            "supportsAccessToken": kwargs.get("supportsAccessToken", 1),
-        }
-        payload.update({k: v for k, v in kwargs.items() if k not in payload and v is not None})
-        result = await self.account.alogin(
-            user=payload.get("user"),
-            password=payload.get("pass"),
-            install_id=payload.get("install_id"),
-            supportsAccessToken=payload.get("supportsAccessToken"),
-            subscribe_to_newsletter=payload.get("subscribe_to_newsletter"),
-            implicit_newsletter_consent=payload.get("implicit_newsletter_consent"),
-            first_name=payload.get("first_name"),
-        )
-        if isinstance(result, dict):
-            self._auth.update_from_response(result)
-        return result
+    Example:
+        >>> async with AsyncOliveTree() as ot:            # doctest: +SKIP
+        ...     home = await ot.store.home()
+        ...     notes = await ot.sync.pull("annotations")
 
-    async def refresh(self) -> dict[str, Any]:
-        """Refresh bearer tokens via ``account_refresh_token``.
+    NOTE: each call runs the synchronous client in a worker thread (``asyncio.to_thread``), so
+    concurrency is limited by the default thread pool and calls share one connection pool and token.
+    Upgrade path if that becomes a bottleneck: a native ``httpx.AsyncClient`` transport.
+    """
 
-        Requires a current access token from :py:meth:`login`.
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        #: The wrapped synchronous client (token, device id, settings live here).
+        self.client = OliveTree(*args, **kwargs)
+        for name in GROUPS:
+            setattr(self, name, AsyncGroup(getattr(self.client, name)))
 
-        Returns:
-            Parsed account authentication response.
+    def __getattr__(self, name: str) -> Any:
+        # Settings such as token, device_id and app_fields come from the wrapped client.
+        return getattr(self.client, name)
 
-        Raises:
-            OliveTreeAuthError: If refresh fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        result = await self.account.arefresh_token()
-        if isinstance(result, dict):
-            self._auth.update_from_response(result)
-        return result
-
-    async def ensure_auth(self) -> None:
-        """Login automatically when credentials are configured but no token is set.
-
-        Returns:
-            None.
-
-        Raises:
-            OliveTreeAuthError: If login fails.
-        """
-        if not self._auth.access_token and self._config.username and self._config.password:
-            await self.login()
-
-    async def _aapi_request(self, spec: Any, **kwargs: Any) -> Any:
-        """Execute an async request with automatic authentication when required.
-
-        Args:
-            spec: Operation specification.
-            **kwargs: Arguments forwarded to the transport layer.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAuthError: If automatic login fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        if spec.security and self._auth.needs_bearer(spec.security):
-            await self.ensure_auth()
-        return await self._transport.request(spec, **kwargs)
-
-    async def aclose(self) -> None:
-        """Close the underlying HTTP client.
-
-        Returns:
-            None.
-        """
-        await self._transport.aclose()
-
-    async def __aenter__(self) -> AsyncOliveTreeClient:
-        """Enter async context manager.
-
-        Returns:
-            This client instance.
-        """
+    async def __aenter__(self) -> AsyncOliveTree:
         return self
 
-    async def __aexit__(self, *args: object) -> None:
-        """Exit async context manager and close connections.
-
-        Returns:
-            None.
-        """
+    async def __aexit__(self, *_: Any) -> None:
         await self.aclose()
+
+    async def aclose(self) -> None:
+        """Close the underlying HTTP connection pool."""
+        await asyncio.to_thread(self.client.close)
+
+    async def login(self) -> dict:
+        """Log in. See :meth:`OliveTree.login`."""
+        return await asyncio.to_thread(self.client.login)
+
+    async def refresh(self) -> dict:
+        """Renew the access token. See :meth:`OliveTree.refresh`."""
+        return await asyncio.to_thread(self.client.refresh)
+
+    async def ensure_auth(self) -> None:
+        """Log in now if there is no token yet."""
+        await asyncio.to_thread(self.client.ensure_auth)
+
+    async def request(self, method: str, url: str, **kwargs: Any) -> Any:
+        """Send one request. Same arguments as :meth:`OliveTree.request`."""
+        return await asyncio.to_thread(self.client.request, method, url, **kwargs)
+
+
+#: Name used by pyolivetree 1.x.
+AsyncOliveTreeClient = AsyncOliveTree

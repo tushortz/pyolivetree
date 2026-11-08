@@ -1,346 +1,117 @@
-"""Generated account API resource."""
+"""Account endpoints: login, tokens, signup and subscriptions."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pyolivetree._operations import OPERATIONS
-
-if TYPE_CHECKING:
-    from pyolivetree.async_client import AsyncOliveTreeClient
-    from pyolivetree.client import OliveTreeClient
+from pyolivetree.constants import ACCOUNT
+from pyolivetree.resources._base import Resource
 
 
-class AccountResource:
-    """Resource methods for the Olive Tree API."""
+class Account(Resource):
+    """``www.olivetree.com/store/br5/app/json/account``. Available as ``ot.account``."""
 
-    def __init__(self, client: OliveTreeClient | AsyncOliveTreeClient) -> None:
-        self._client = client
+    def _creds(self, **kw: Any) -> dict[str, Any]:
+        c = self._c
+        return {
+            "user": c.username,
+            "pass": c.password,
+            "install_id": c.device_id,
+            "supportsAccessToken": 1,
+            **kw,
+        }
 
-    def forgot_password(self, email: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Forgot password.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_forgot_password"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"email": email}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def aforgot_password(self, email: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Forgot password.
+    def login(self, **kw: Any) -> dict:
+        """Log in with the client's username and password and store the tokens.
 
         Args:
-            See method parameters for path, query, and body fields.
+            **kw: Extra form fields (e.g. ``subscribe_to_newsletter``).
 
         Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            ``{"authenticated", "user_id", "authentication_token", "expires", "refresh_token"}``.
         """
-        spec = OPERATIONS["account_forgot_password"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"email": email}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
+        data = self._c.request("POST", f"{ACCOUNT}/account_login", data=self._creds(**kw), auth=False)
+        self._c._take_tokens(data)
+        return data
 
-    def signup(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Create account.
+    def access_token(self, **kw: Any) -> dict:
+        """Exchange credentials for an access token (older login flow). Stores the tokens.
+
+        Returns:
+            Same shape as :meth:`login`.
+        """
+        data = self._c.request("POST", f"{ACCOUNT}/access_token", data=self._creds(**kw), auth=False)
+        self._c._take_tokens(data)
+        return data
+
+    def refresh_token(self) -> dict:
+        """Swap the stored refresh token for a new access token. Stores the new tokens.
+
+        Returns:
+            Same shape as :meth:`login`.
+        """
+        data = self._c.request(
+            "POST",
+            f"{ACCOUNT}/refresh_token",
+            auth=False,
+            headers={"OTAuthorization": f"Bearer {self._c.refresh_token}"},
+        )
+        self._c._take_tokens(data)
+        return data
+
+    def signup(self, email: str, password: str, first_name: str = "", **kw: Any) -> dict:
+        """Create a new Olive Tree account.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            email: Account email.
+            password: Account password.
+            first_name: Optional first name.
+            **kw: Extra fields such as ``subscribe_to_newsletter``.
         """
-        spec = OPERATIONS["account_signup"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request(
+            "POST",
+            f"{ACCOUNT}/account_signup",
+            auth=False,
+            data={**self._creds(**kw), "user": email, "pass": password, "first_name": first_name},
+        )
 
-    async def asignup(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Create account.
+    def forgot_password(self, email: str) -> dict:
+        """Send a password-reset email.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            email: Account email.
         """
-        spec = OPERATIONS["account_signup"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request("POST", f"{ACCOUNT}/forgot_password", data={"email": email}, auth=False)
 
-    def login(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Login with credentials.
+    def web_handoff_token(self, storefront_code: str | None = None) -> dict:
+        """Get a one-time token for opening olivetree.com already logged in.
 
         Args:
-            See method parameters for path, query, and body fields.
+            storefront_code: Optional storefront code.
 
         Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            ``{"token": ...}``; pass it to :meth:`~pyolivetree.resources.web.Web.app_to_web_bridge`
+            as ``login_handoff_token``.
         """
-        spec = OPERATIONS["account_login"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request(
+            "POST", f"{ACCOUNT}/generate_web_handoff_token", data={"storefront_code": storefront_code}
+        )
 
-    async def alogin(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Login with credentials.
+    def subscription(self, subscription_id: int) -> dict:
+        """Details of one of your subscriptions.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            subscription_id: Subscription id.
         """
-        spec = OPERATIONS["account_login"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request("POST", f"{ACCOUNT}/subscription/{subscription_id}")
 
-    def access_token(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Upgrade to access token.
+    def add_variable_subscription_selections(self, selection_id: int, **data: Any) -> dict:
+        """Save product choices for a pick-your-books subscription.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            selection_id: Selection id.
+            **data: Form fields the store expects.
         """
-        spec = OPERATIONS["account_access_token"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def aaccess_token(self, user: Any = None, password: Any = None, install_id: Any = None, supportsAccessToken: Any = None, subscribe_to_newsletter: Any = None, implicit_newsletter_consent: Any = None, first_name: Any = None, data: dict[str, Any] | None = None) -> Any:
-        """Upgrade to access token.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_access_token"]
-        path_params = {}
-        query = {}
-        payload: dict[str, Any] = {"user": user, "pass": password, "install_id": install_id, "supportsAccessToken": supportsAccessToken, "subscribe_to_newsletter": subscribe_to_newsletter, "implicit_newsletter_consent": implicit_newsletter_consent, "first_name": first_name}
-        payload = {k: v for k, v in payload.items() if v is not None}
-        if data:
-            payload.update(data)
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def refresh_token(self, data: dict[str, Any] | None = None) -> Any:
-        """Refresh access token.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_refresh_token"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def arefresh_token(self, data: dict[str, Any] | None = None) -> Any:
-        """Refresh access token.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_refresh_token"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def generate_web_handoff_token(self, data: dict[str, Any] | None = None) -> Any:
-        """Generate web handoff token.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_generate_web_handoff_token"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def agenerate_web_handoff_token(self, data: dict[str, Any] | None = None) -> Any:
-        """Generate web handoff token.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_generate_web_handoff_token"]
-        path_params = {}
-        query = {}
-        payload = data if data is not None else {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def subscription(self, subscriptionId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Account subscription action.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_subscription"]
-        path_params = {"subscriptionId": subscriptionId}
-        query = {}
-        payload = data if data is not None else {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def asubscription(self, subscriptionId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Account subscription action.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_subscription"]
-        path_params = {"subscriptionId": subscriptionId}
-        query = {}
-        payload = data if data is not None else {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
-
-    def add_variable_subscription_selections(self, selectionId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Add variable subscription selections.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_add_variable_subscription_selections"]
-        path_params = {"selectionId": selectionId}
-        query = {}
-        payload = data if data is not None else {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=payload)
-
-    async def aadd_variable_subscription_selections(self, selectionId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Add variable subscription selections.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["account_add_variable_subscription_selections"]
-        path_params = {"selectionId": selectionId}
-        query = {}
-        payload = data if data is not None else {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=payload)
+        return self._c.request(
+            "POST", f"{ACCOUNT}/add_variable_subscription_selections/{selection_id}", data=data
+        )

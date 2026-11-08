@@ -1,126 +1,156 @@
-"""Generated sync API resource."""
+"""Sync endpoints: your notes, highlights, library and reading-plan data."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import platform
+from collections.abc import Iterator
+from typing import Any
 
-from pyolivetree._operations import OPERATIONS
-
-if TYPE_CHECKING:
-    from pyolivetree.async_client import AsyncOliveTreeClient
-    from pyolivetree.client import OliveTreeClient
+from pyolivetree.constants import PLATFORM_ID, SYNC, SYNC_PROTOCOL, DataSet, data_set_name
+from pyolivetree.resources._base import Resource
 
 
-class SyncResource:
-    """Resource methods for the Olive Tree API."""
+class Sync(Resource):
+    """``sync.olivetree.com``. Available as ``ot.sync``.
 
-    def __init__(self, client: OliveTreeClient | AsyncOliveTreeClient) -> None:
-        self._client = client
+    Data is split into data sets (:class:`~pyolivetree.DataSet`; plain strings also work). Each row looks like
+    ``{"id", "table_name", "table_version", "sequence_number", "deleted", "datum": {...}}``.
+    Every change gets a higher ``sequence_number``, so you can fetch only what's new.
 
-    def status(self, device_id: int | str, do_not_lock: int | str, managed_data_set: int | str, update_count: int | str, sync_client_protocol_version: int | str, reader_version: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Sync status and lock.
+    Main tables in ``annotations``: ``annotations`` (notes, highlights, clips; text in
+    ``datum.content``), ``annotation_locations``, ``annotation_categories``, ``highlighters``.
+    """
 
-        Args:
-            See method parameters for path, query, and body fields.
+    def _q(self, **kw: Any) -> dict[str, Any]:
+        return {"device_id": self._c.device_id, "sync_client_protocol_version": SYNC_PROTOCOL, **kw}
 
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["sync_status"]
-        path_params = {}
-        query = {"device_id": device_id, "do_not_lock": do_not_lock, "managed_data_set": managed_data_set, "update_count": update_count, "sync_client_protocol_version": sync_client_protocol_version, "reader_version": reader_version}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=data)
-
-    async def astatus(self, device_id: int | str, do_not_lock: int | str, managed_data_set: int | str, update_count: int | str, sync_client_protocol_version: int | str, reader_version: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Sync status and lock.
+    def status(self, lock: bool = False, data_set: DataSet | str | None = None) -> dict:
+        """Server status and the latest sequence number per data set.
 
         Args:
-            See method parameters for path, query, and body fields.
+            lock: Take the write lock (needed before :meth:`push`). Default leaves it alone.
+            data_set: Optional data set to scope the lock to.
 
         Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            ``{"customer": {"user_id", "master_sequence_numbers": {...}}, "server": {...}}``.
         """
-        spec = OPERATIONS["sync_status"]
-        path_params = {}
-        query = {"device_id": device_id, "do_not_lock": do_not_lock, "managed_data_set": managed_data_set, "update_count": update_count, "sync_client_protocol_version": sync_client_protocol_version, "reader_version": reader_version}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=data)
+        q = self._q(
+            managed_data_set=_managed(data_set) if data_set else None,
+            do_not_lock=None if lock else "true",
+            reader_version=self._c.reader_version,
+        )
+        return self._c.request("GET", f"{SYNC}/syncables/status.json", params=q)
 
-    def release_lock(self, device_id: int | str, managed_data_set: int | str, sync_client_protocol_version: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Release sync lock.
+    def page(self, data_set: DataSet | str = DataSet.ANNOTATIONS, above: int = 0) -> list[dict]:
+        """One page of rows changed after sequence number ``above``.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            data_set: A :class:`~pyolivetree.DataSet` or its name, e.g. ``"library"``.
+            above: Return rows with a higher sequence number than this.
         """
-        spec = OPERATIONS["sync_release_lock"]
-        path_params = {}
-        query = {"device_id": device_id, "managed_data_set": managed_data_set, "sync_client_protocol_version": sync_client_protocol_version}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=data)
+        q = self._q(
+            platform_id=PLATFORM_ID,
+            above=above,
+            managed_data_set=_managed(data_set),
+            reader_version=self._c.reader_version,
+        )
+        return self._c.request("GET", f"{SYNC}/syncables.json", params=q).get("syncables") or []
 
-    async def arelease_lock(self, device_id: int | str, managed_data_set: int | str, sync_client_protocol_version: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Release sync lock.
+    def pull(self, data_set: DataSet | str = DataSet.ANNOTATIONS, above: int = 0) -> Iterator[dict]:
+        """Yield every row changed after ``above``, fetching pages until caught up.
 
         Args:
-            See method parameters for path, query, and body fields.
+            data_set: Data set to read (:class:`~pyolivetree.DataSet` or name).
+            above: Start after this sequence number (0 = everything).
+
+        Yields:
+            Sync rows. Rows with ``deleted == 1`` were removed on another device.
+        """
+        latest = self.status()["customer"]["master_sequence_numbers"].get(data_set_name(data_set), 0)
+        while above < latest:
+            page = self.page(data_set, above)
+            if not page:
+                break
+            yield from page
+            top = max(int(i["sequence_number"]) for i in page)
+            if top <= above:  # server didn't advance; stop instead of looping
+                break
+            above = top
+
+    def table_schema(self, data_set: DataSet | str, table: str, version: int = 0) -> dict:
+        """The server's SQLite schema for a synced table.
 
         Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            ``{"managed_data_set", "table_name", "table_version", "sqlite3_schema"}``.
         """
-        spec = OPERATIONS["sync_release_lock"]
-        path_params = {}
-        query = {"device_id": device_id, "managed_data_set": managed_data_set, "sync_client_protocol_version": sync_client_protocol_version}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=data)
+        return self._c.request(
+            "GET",
+            f"{SYNC}/syncables/get_table_schema/{_managed(data_set)}/{table}/{version}.json",
+            params={"sync_client_protocol_version": SYNC_PROTOCOL},
+        )
 
-    def bad_annotation_data(self, data: dict[str, Any] | None = None) -> Any:
-        """Get possibly bad annotation data.
+    def push(
+        self,
+        table: str,
+        datum: dict,
+        *,
+        data_set: DataSet | str = DataSet.ANNOTATIONS,
+        item_id: int = -1,
+        sequence_number: int = -1,
+        deleted: bool = False,
+        customer_id: int | None = None,
+        release_lock: bool = True,
+    ) -> dict:
+        """Create or update one row on the server. **Changes your real account.**
+
+        The expected flow is ``status(lock=True)``, then one ``push`` per row, with
+        ``release_lock=True`` on the last one.
 
         Args:
-            See method parameters for path, query, and body fields.
+            table: Table name, e.g. ``"annotations"``.
+            datum: Row fields, shaped like ``datum`` from :meth:`pull` (``client_id`` = local id).
+            data_set: Data set the table belongs to.
+            item_id: Server row id; ``-1`` creates a new row.
+            sequence_number: Current sequence number of the row; ``-1`` for new rows.
+            deleted: Mark the row deleted.
+            customer_id: Your user id. Looked up via :meth:`status` if omitted.
+            release_lock: Release the write lock after this push.
 
         Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            ``{"syncable": {...}}`` with the saved row, or ``{"exception": {...}}``.
         """
-        spec = OPERATIONS["sync_bad_annotation_data"]
-        path_params = {}
-        query = {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=data)
+        if customer_id is None:
+            customer_id = self.status()["customer"]["user_id"]
+        body = {
+            "device_id": self._c.device_id,
+            "device_model": "pyolivetree",
+            "device_os": platform.release(),
+            "sync_client_protocol_version": SYNC_PROTOCOL,
+            "managed_data_set": _managed(data_set),
+            "table_name": table,
+            "deleted": int(deleted),
+            "id": item_id,
+            "customer_id": customer_id,
+            "sequence_number": sequence_number,
+            "datum": datum,
+        }
+        q = {"sync_client_protocol_version": SYNC_PROTOCOL, "release_lock": "true" if release_lock else None}
+        return self._c.request("POST", f"{SYNC}/syncables/syncitem.json", params=q, json=body)
 
-    async def abad_annotation_data(self, data: dict[str, Any] | None = None) -> Any:
-        """Get possibly bad annotation data.
+    def release_lock(self, data_set: DataSet | str = DataSet.ANNOTATIONS) -> Any:
+        """Release the write lock taken by ``status(lock=True)``."""
+        return self._c.request(
+            "PUT", f"{SYNC}/syncables/release_lock", params=self._q(managed_data_set=_managed(data_set))
+        )
 
-        Args:
-            See method parameters for path, query, and body fields.
+    def possibly_bad_annotation_data(self) -> Any:
+        """Annotations the server flagged as possibly corrupt.
 
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+        The server currently rejects this request (HTTP 401 with a token, 410 Gone with Basic auth).
         """
-        spec = OPERATIONS["sync_bad_annotation_data"]
-        path_params = {}
-        query = {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=data)
+        return self._c.request("GET", f"{SYNC}/syncables/get_possibly_bad_annotation_data.json")
+
+
+def _managed(data_set: DataSet | str) -> str:
+    """Server form of a data set name: ``"managed_annotations"``."""
+    return f"managed_{data_set_name(data_set)}"

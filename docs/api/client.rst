@@ -1,22 +1,27 @@
-Clients
-=======
+Client
+======
 
-.. automodule:: pyolivetree.client
+.. autoclass:: pyolivetree.OliveTree
+   :members: request, login, refresh, ensure_auth, close, token, refresh_token, hmac_key, app_fields
+
+.. autoclass:: pyolivetree.AsyncOliveTree
+   :members: request, login, refresh, ensure_auth, aclose, client
+
+.. autoclass:: pyolivetree.async_client.AsyncGroup
+
+``OliveTreeClient`` and ``AsyncOliveTreeClient`` are aliases kept for 1.x code.
+
+Data sets
+---------
+
+.. autoclass:: pyolivetree.DataSet
    :members:
    :undoc-members:
 
-.. automodule:: pyolivetree.async_client
-   :members:
-   :undoc-members:
+Names are normalised with :func:`pyolivetree.constants.data_set_name`.
 
-.. automodule:: pyolivetree.config
-   :members:
-   :undoc-members:
-
-.. automodule:: pyolivetree.auth
-   :members:
-   :undoc-members:
+Exceptions
+----------
 
 .. automodule:: pyolivetree.exceptions
    :members:
-   :undoc-members:

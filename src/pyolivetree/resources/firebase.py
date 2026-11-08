@@ -1,54 +1,24 @@
-"""Generated firebase API resource."""
+"""Firebase Realtime Database."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pyolivetree._operations import OPERATIONS
-
-if TYPE_CHECKING:
-    from pyolivetree.async_client import AsyncOliveTreeClient
-    from pyolivetree.client import OliveTreeClient
+from pyolivetree.constants import FIREBASE
+from pyolivetree.resources._base import Resource
 
 
-class FirebaseResource:
-    """Resource methods for the Olive Tree API."""
+class Firebase(Resource):
+    """Available as ``ot.firebase``. Requests are unauthenticated."""
 
-    def __init__(self, client: OliveTreeClient | AsyncOliveTreeClient) -> None:
-        self._client = client
-
-    def root(self, data: dict[str, Any] | None = None) -> Any:
-        """Firebase Realtime Database root.
+    def get(self, path: str = "") -> Any:
+        """Read a node, e.g. ``get("config")``. The server may refuse access (HTTP 423 or 401).
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            path: Node path; empty for the root.
         """
-        spec = OPERATIONS["firebase_root"]
-        path_params = {}
-        query = {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=data)
+        return self._c.request("GET", f"{FIREBASE}/{path.strip('/')}.json", auth=False)
 
-    async def aroot(self, data: dict[str, Any] | None = None) -> Any:
-        """Firebase Realtime Database root.
-
-        Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["firebase_root"]
-        path_params = {}
-        query = {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=data)
+    def root(self) -> Any:
+        """Read the database root (``/.json``)."""
+        return self.get()

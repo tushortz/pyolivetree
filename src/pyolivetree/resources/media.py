@@ -1,54 +1,44 @@
-"""Generated media API resource."""
+"""Images and media streams."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pyolivetree._operations import OPERATIONS
-
-if TYPE_CHECKING:
-    from pyolivetree.async_client import AsyncOliveTreeClient
-    from pyolivetree.client import OliveTreeClient
+from pyolivetree.constants import CDN, MEDIA, WWW
+from pyolivetree.resources._base import Resource
 
 
-class MediaResource:
-    """Resource methods for the Olive Tree API."""
+class Media(Resource):
+    """Available as ``ot.media``. Image methods return ``bytes``."""
 
-    def __init__(self, client: OliveTreeClient | AsyncOliveTreeClient) -> None:
-        self._client = client
+    def _get(self, url: str) -> Any:
+        return self._c.request("GET", url, auth=False)
 
-    def product_image(self, productId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Legacy product image (40px).
+    def cover(self, product_id: int) -> bytes:
+        """Product cover (JPEG)."""
+        return self._get(f"{CDN}/images/covers/{product_id}.jpg")
 
-        Args:
-            See method parameters for path, query, and body fields.
+    def cover_stack(self, product_id: int) -> bytes:
+        """Stacked cover for book sets (PNG). 404 for single products."""
+        return self._get(f"{CDN}/images/covers/{product_id}_stack.png")
 
-        Returns:
-            Parsed API response.
+    def product_image(self, product_id: int) -> bytes:
+        """Legacy product image (JPEG)."""
+        return self._get(f"{MEDIA}/store/images40/{product_id}.jpg")
 
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
-        """
-        spec = OPERATIONS["media_product_image"]
-        path_params = {"productId": productId}
-        query = {}
-        return self._client._api_request(spec, path_params=path_params, query=query, data=data)
-
-    async def aproduct_image(self, productId: int | str, data: dict[str, Any] | None = None) -> Any:
-        """Legacy product image (40px).
+    def reading_plan_image(self, template_id: int, size: str = "hero") -> bytes:
+        """Reading-plan artwork.
 
         Args:
-            See method parameters for path, query, and body fields.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAPIError: If the API returns an error status.
-            OliveTreeAuthError: If authentication or HMAC signing fails.
+            template_id: Reading-plan template id.
+            size: ``hero``, ``carousel``, ``grid``, ``list`` or ``portrait``.
         """
-        spec = OPERATIONS["media_product_image"]
-        path_params = {"productId": productId}
-        query = {}
-        return await self._client._aapi_request(spec, path_params=path_params, query=query, data=data)
+        return self._get(f"{CDN}/images/reading_plans/{template_id}_{size}.jpg")
+
+    def reading_plan_list_image(self, template_id: int) -> bytes:
+        """Reading-plan list thumbnail (JPEG)."""
+        return self._get(f"{WWW}/store/images/reading_plans/{template_id}_list.jpg")
+
+    def stream(self, content_id: int, name: str) -> Any:
+        """MPEG-DASH manifest for audio/video content you own."""
+        return self._c.request("GET", f"{WWW}/media/content/{content_id}/{name}/stream.mpd")

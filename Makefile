@@ -1,45 +1,50 @@
+# Requires uv: https://docs.astral.sh/uv/
 .DEFAULT_GOAL := help
+.PHONY: help install test coverage lint format docs docs-serve security run build check publish-test publish clean
 
-.PHONY: help install generate lint format test build docs security run integration deploy-testpypi deploy-pypi
+help: ## Show targets
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-13s\033[0m %s\n", $$1, $$2}'
 
-help: ## Show this help
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+install: ## Create .venv with the package, dev and docs extras
+	uv sync --extra dev --extra docs
 
-install: ## Install dependencies with uv
-	uv sync --extra dev
+test: ## Run tests
+	uv run pytest -q
 
-generate: ## Regenerate client code from swagger.yml
-	uv run python scripts/generate_client.py
-	uv run black src/pyolivetree/resources src/pyolivetree/models src/pyolivetree/_operations.py tests/operation_registry.py
+coverage: ## Run tests with a coverage report
+	uv run pytest -q --cov=pyolivetree --cov-report=term-missing
 
-lint: ## Run black and ruff checks
-	uv run black --check src tests scripts examples
-	uv run ruff check src tests scripts examples
+lint: ## Check style
+	uv run ruff check src tests
 
-format: ## Auto-format code
-	uv run black src tests scripts examples
-	uv run ruff check --fix src tests scripts examples
+format: ## Auto-fix style
+	uv run ruff check --fix src tests
+	uv run ruff format src tests
+	uv run black src tests
 
-test: ## Run lint and unit tests with coverage
-	./scripts/run_tests.sh
-
-build: ## Build sdist and wheel
-	uv build
-
-docs: ## Build Sphinx HTML documentation
+docs: ## Build HTML docs into docs/_build/html
 	uv run sphinx-build -W -b html docs docs/_build/html
 
-security: ## Scan dependencies with pysentry-rs
+docs-serve: docs ## Build docs and serve them on http://localhost:8000
+	python3 -m http.server -d docs/_build/html 8000
+
+security: ## Scan dependencies for known vulnerabilities
 	uvx pysentry-rs .
 
-run: ## Run sync basic example
+run: ## Run the sync example (needs .env)
 	uv run python examples/sync_basic.py
 
-integration: ## Run live API integration harness
-	uv run python scripts/run_integration.py
+build: clean ## Build sdist and wheel into dist/
+	uv build
 
-deploy-testpypi: build ## Publish to TestPyPI
-	uv publish --index testpypi
+check: build ## Validate dist/ for PyPI
+	uv run twine check dist/*
 
-deploy-pypi: build ## Publish to PyPI
+publish-test: check ## Upload to TestPyPI (needs UV_PUBLISH_TOKEN for test.pypi.org)
+	uv publish --publish-url https://test.pypi.org/legacy/
+
+publish: check ## Upload to PyPI (needs UV_PUBLISH_TOKEN)
 	uv publish
+
+clean: ## Remove build outputs
+	rm -rf dist build docs/_build *.egg-info

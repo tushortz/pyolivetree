@@ -1,200 +1,218 @@
-"""Synchronous Olive Tree API client."""
+"""The :class:`OliveTree` client: auth, request signing and endpoint groups."""
 
 from __future__ import annotations
 
+import json as jsonlib
+import os
+import platform
+import uuid
 from typing import Any
 
-from pyolivetree._transport.sync import SyncTransport
-from pyolivetree.auth import AuthManager
-from pyolivetree.config import ClientConfig
+import httpx
+
+from pyolivetree._http import load_dotenv, parse_hmac_key, parse_response, sign_body
+from pyolivetree.constants import PLATFORM_ID, TOKEN_ERRORS, WWW
+from pyolivetree.exceptions import OliveTreeAuthError, OliveTreeError
 from pyolivetree.resources import (
-    AccountResource,
-    AdminResource,
-    AnalyticsResource,
-    BrowserResource,
-    CdnResource,
-    FirebaseResource,
-    LegacyResource,
-    MediaResource,
-    MessagesResource,
-    PrivacyResource,
-    SmartSearchResource,
-    SpeechResource,
-    StaticResource,
-    StoreResource,
-    StoreXmlResource,
-    SyncResource,
-    VotdResource,
+    AI,
+    Account,
+    Firebase,
+    Media,
+    Messages,
+    Products,
+    Reading,
+    Store,
+    Sync,
+    Telemetry,
+    Web,
 )
 
 
-class OliveTreeClient:
-    """Synchronous client for the Olive Tree Bible Reader API."""
+class OliveTree:
+    """Client for the Olive Tree Bible app APIs.
+
+    Endpoints are grouped as attributes: :attr:`account`, :attr:`store`, :attr:`products`,
+    :attr:`sync`, :attr:`ai`, :attr:`reading`, :attr:`media`, :attr:`messages`,
+    :attr:`telemetry`, :attr:`web` and :attr:`firebase`. The client logs in on the
+    first call that needs it. :class:`AsyncOliveTree` offers the same API with ``await``.
+
+    Example:
+        >>> with OliveTree() as ot:                       # doctest: +SKIP
+        ...     notes = list(ot.sync.pull("annotations"))
+        ...     owned = list(ot.store.all_products(ot.store.purchased()))
+
+    Args:
+        username: Olive Tree email. Defaults to ``OLIVE_TREE_USERNAME`` (env or ``.env``).
+        password: Password. Defaults to ``OLIVE_TREE_PASSWORD``.
+        device_id: Install id sent to the server. Defaults to ``OLIVE_TREE_INSTALL_ID`` or a new UUID.
+        install_id: Same as ``device_id`` (1.x name).
+        token: An existing ``authentication_token`` to reuse instead of logging in.
+        hmac_key: Signing key (hex, base64 or bytes) used for every signed endpoint instead of the
+            built-in per-service keys. Defaults to ``OLIVE_TREE_HMAC_KEY``.
+        transport: Custom :mod:`httpx` transport (e.g. :class:`httpx.MockTransport` in tests).
+        timeout: Request timeout in seconds.
+    """
 
     def __init__(
         self,
-        *,
         username: str | None = None,
         password: str | None = None,
+        *,
+        device_id: str | None = None,
         install_id: str | None = None,
-        access_token: str | None = None,
-        refresh_token: str | None = None,
+        token: str | None = None,
         hmac_key: str | bytes | None = None,
-        timeout: float = 30.0,
-        base_url: str = "https://www.olivetree.com",
-        config: ClientConfig | None = None,
+        transport: httpx.BaseTransport | None = None,
+        timeout: float = 300,
     ) -> None:
-        """Initialize the synchronous client.
-
-        Args:
-            username: Olive Tree account email.
-            password: Olive Tree account password.
-            install_id: Device install identifier.
-            access_token: Optional bearer token to restore an in-memory session.
-            refresh_token: Optional refresh token to restore an in-memory session.
-            hmac_key: HMAC signing key for signed endpoints.
-            timeout: Request timeout in seconds.
-            base_url: Default API base URL.
-            config: Pre-built configuration object. Overrides other args if set.
-
-        Returns:
-            None.
-
-        Raises:
-            ValueError: If hmac_key encoding is invalid.
-        """
-        self._config = config or ClientConfig.from_env(
-            username=username,
-            password=password,
-            install_id=install_id,
-            hmac_key=hmac_key,
-            timeout=timeout,
-            base_url=base_url,
+        load_dotenv()
+        self.username = username or os.environ.get("OLIVE_TREE_USERNAME", "")
+        self.password = password or os.environ.get("OLIVE_TREE_PASSWORD", "")
+        self.device_id = (
+            device_id or install_id or os.environ.get("OLIVE_TREE_INSTALL_ID") or str(uuid.uuid4())
         )
-        self._auth = AuthManager(
-            self._config,
-            access_token=access_token,
-            refresh_token=refresh_token,
+        #: Current access token (``authentication_token``), or ``None`` before login.
+        self.token: str | None = token
+        #: Refresh token from the last login, used by :meth:`refresh`.
+        self.refresh_token: str | None = None
+        #: Signing key override, or ``None`` to use the built-in per-service keys.
+        self.hmac_key: bytes | None = parse_hmac_key(
+            hmac_key if hmac_key is not None else os.environ.get("OLIVE_TREE_HMAC_KEY")
         )
-        self._transport = SyncTransport(self._auth, timeout=self._config.timeout)
-        self.store = StoreResource(self)
-        self.account = AccountResource(self)
-        self.store_xml = StoreXmlResource(self)
-        self.legacy = LegacyResource(self)
-        self.messages = MessagesResource(self)
-        self.smart_search = SmartSearchResource(self)
-        self.sync = SyncResource(self)
-        self.analytics = AnalyticsResource(self)
-        self.privacy = PrivacyResource(self)
-        self.speech = SpeechResource(self)
-        self.votd = VotdResource(self)
-        self.cdn = CdnResource(self)
-        self.media = MediaResource(self)
-        self.static = StaticResource(self)
-        self.admin = AdminResource(self)
-        self.browser = BrowserResource(self)
-        self.firebase = FirebaseResource(self)
-
-    def login(self, **kwargs: Any) -> dict[str, Any]:
-        """Authenticate and cache bearer tokens.
-
-        Args:
-            **kwargs: Optional overrides for user, pass, install_id, and other login fields.
-
-        Returns:
-            Parsed account authentication response.
-
-        Raises:
-            OliveTreeAuthError: If login fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        payload = {
-            "user": kwargs.get("user", self._config.username),
-            "pass": kwargs.get("pass", kwargs.get("password", self._config.password)),
-            "install_id": kwargs.get("install_id", self._config.install_id),
-            "supportsAccessToken": kwargs.get("supportsAccessToken", 1),
+        self.reader_version = f"pyolivetree_OS_{platform.release()}"
+        #: Standard client fields sent with every store/account form post.
+        #: Without them some endpoints, e.g. ``store.purchased``, return empty results.
+        self.app_fields: dict[str, Any] = {
+            "platform": PLATFORM_ID,
+            "platudid": self.device_id,
+            "OS": "14",
+            "language": "en",
+            "install_id": self.device_id,
+            "supportsAccessToken": 1,
+            "ReaderVersion": "7.20",
+            "model": "pyolivetree",
+            "supportsOtPub": 1,
+            "supportsProductDRM": 1,
+            "supportsAudio": 1,
+            "supportsSubscription": 1,
+            "supportsBookSets": 1,
         }
-        payload.update({k: v for k, v in kwargs.items() if k not in payload and v is not None})
-        result = self.account.login(
-            user=payload.get("user"),
-            password=payload.get("pass"),
-            install_id=payload.get("install_id"),
-            supportsAccessToken=payload.get("supportsAccessToken"),
-            subscribe_to_newsletter=payload.get("subscribe_to_newsletter"),
-            implicit_newsletter_consent=payload.get("implicit_newsletter_consent"),
-            first_name=payload.get("first_name"),
+        self.http = httpx.Client(
+            timeout=timeout,
+            transport=transport,
+            follow_redirects=True,
+            headers={"Accept": "application/json, */*"},
         )
-        if isinstance(result, dict):
-            self._auth.update_from_response(result)
-        return result
 
-    def refresh(self) -> dict[str, Any]:
-        """Refresh bearer tokens via ``account_refresh_token``.
+        self.account = Account(self)  #: Login, tokens, signup, subscriptions.
+        self.store = Store(self)  #: Catalog, search, purchases, wishlists.
+        self.products = Products(self)  #: XML product info and download links.
+        self.sync = Sync(self)  #: Notes, highlights, library and reading-plan data.
+        self.ai = AI(self)  #: Smart Search AI.
+        self.reading = Reading(self)  #: Reading plans, devotionals, verse of the day.
+        self.media = Media(self)  #: Covers and media streams.
+        self.messages = Messages(self)  #: In-app message center.
+        self.telemetry = Telemetry(self)  #: Analytics, experiments, consent.
+        self.web = Web(self)  #: Web pages and app config files.
+        self.firebase = Firebase(self)  #: Firebase Realtime Database.
 
-        Requires a current access token from :py:meth:`login`.
-
-        Returns:
-            Parsed account authentication response.
-
-        Raises:
-            OliveTreeAuthError: If refresh fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        result = self.account.refresh_token()
-        if isinstance(result, dict):
-            self._auth.update_from_response(result)
-        return result
-
-    def ensure_auth(self) -> None:
-        """Login automatically when credentials are configured but no token is set.
-
-        Returns:
-            None.
-
-        Raises:
-            OliveTreeAuthError: If login fails.
-        """
-        if not self._auth.access_token and self._config.username and self._config.password:
-            self.login()
-
-    def _api_request(self, spec: Any, **kwargs: Any) -> Any:
-        """Execute a request with automatic authentication when required.
-
-        Args:
-            spec: Operation specification.
-            **kwargs: Arguments forwarded to the transport layer.
-
-        Returns:
-            Parsed API response.
-
-        Raises:
-            OliveTreeAuthError: If automatic login fails.
-            OliveTreeAPIError: If the API returns an error status.
-        """
-        if spec.security and self._auth.needs_bearer(spec.security):
-            self.ensure_auth()
-        return self._transport.request(spec, **kwargs)
-
-    def close(self) -> None:
-        """Close the underlying HTTP client.
-
-        Returns:
-            None.
-        """
-        self._transport.close()
-
-    def __enter__(self) -> OliveTreeClient:
-        """Enter context manager.
-
-        Returns:
-            This client instance.
-        """
+    def __enter__(self) -> OliveTree:
         return self
 
-    def __exit__(self, *args: object) -> None:
-        """Exit context manager and close connections.
+    def __exit__(self, *_: Any) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """Close the underlying HTTP connection pool."""
+        self.http.close()
+
+    def login(self) -> dict:
+        """Log in with the configured credentials. Same as :meth:`Account.login`.
+
+        Raises:
+            OliveTreeAuthError: If credentials are missing or rejected.
+        """
+        if not (self.username and self.password):
+            raise OliveTreeAuthError("Set OLIVE_TREE_USERNAME and OLIVE_TREE_PASSWORD (or pass them in).")
+        return self.account.login()
+
+    def refresh(self) -> dict:
+        """Renew the access token with the stored refresh token. Same as :meth:`Account.refresh_token`."""
+        return self.account.refresh_token()
+
+    def ensure_auth(self) -> None:
+        """Log in now if there is no token yet."""
+        if not self.token:
+            self.login()
+
+    def _take_tokens(self, data: dict) -> None:
+        self.token = data.get("authentication_token") or self.token
+        self.refresh_token = data.get("refresh_token") or self.refresh_token
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: dict | None = None,
+        data: dict | None = None,
+        json: Any = None,
+        headers: dict | None = None,
+        auth: bool = True,
+        sign: str | None = None,
+        basic: bool = False,
+    ) -> Any:
+        """Send one request. Every endpoint method goes through here; use it for anything unwrapped.
+
+        ``None`` values in ``params`` and ``data`` are dropped.
+
+        Args:
+            method: HTTP method.
+            url: Full URL.
+            params: Query string values.
+            data: Form fields. Store/account URLs also get :attr:`app_fields`.
+            json: JSON body (sent compact, so the signature matches the bytes sent).
+            headers: Extra headers.
+            auth: Send ``OTAuthorization: Bearer <token>``, logging in first if needed.
+            sign: HMAC key profile for a ``signature`` header (``"telemetry"``, ``"ai"``, ...).
+            basic: Send HTTP Basic auth with :attr:`username` / :attr:`password`.
 
         Returns:
-            None.
+            Parsed JSON, ``str`` for text/XML/HTML, or ``bytes``.
+
+        Raises:
+            OliveTreeError: On HTTP errors. After a token error the client logs in again and
+                retries once before raising.
         """
-        self.close()
+        if url.startswith(f"{WWW}/store/br5/app/") and json is None:
+            data = {**self.app_fields, **(data or {})}
+        params, data, hdrs = _drop_none(params), _drop_none(data), dict(headers or {})
+        content = None
+        if json is not None:
+            content = jsonlib.dumps(json, separators=(",", ":")).encode()
+            hdrs["Content-Type"] = "application/json"
+        if sign:
+            hdrs["signature"] = sign_body(content or b"", sign, self.hmac_key)
+        basic_auth = (self.username, self.password) if basic else None
+        for attempt in (1, 2):
+            if auth:
+                self.ensure_auth()
+                hdrs["OTAuthorization"] = f"Bearer {self.token}"
+            r = self.http.request(
+                method, url, params=params, data=data, content=content, headers=hdrs, auth=basic_auth
+            )
+            try:
+                return parse_response(r)
+            except OliveTreeError as e:
+                stale = e.code in TOKEN_ERRORS or e.status == 401
+                if not (auth and attempt == 1 and stale):
+                    raise
+                self.token = None  # log in again and retry once
+
+
+def _drop_none(d: dict | None) -> dict | None:
+    return {k: v for k, v in d.items() if v is not None} if d else None
+
+
+#: Name used by pyolivetree 1.x.
+OliveTreeClient = OliveTree
