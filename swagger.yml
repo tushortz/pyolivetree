@@ -1,0 +1,3383 @@
+openapi: 3.0.3
+info:
+  title: Olive Tree Bible Reader API
+  description: 'Reverse-engineered OpenAPI specification from the decompiled Olive Tree Bible Reader Android client (biblereader.olivetree).
+
+
+    **Limitations:**
+
+    - Request/response shapes reflect client expectations; servers may accept additional fields.
+
+    - Dynamic store paths (resource guide, RC sections) use server-driven URL suffixes.
+
+    - HMAC `signature` header requires device-specific key from otTelemetry/HMACVerification.
+
+    - DRM license URLs are fetched dynamically from media manifests.
+
+    - Most store endpoints use POST with application/x-www-form-urlencoded bodies.
+
+    '
+  version: 1.0.0
+  contact:
+    name: Olive Tree
+    url: https://www.olivetree.com
+servers:
+- url: https://www.olivetree.com
+  description: Main store, account, legacy API, messages
+- url: https://sync.olivetree.com
+  description: Annotation/library sync
+- url: https://biblesearch-ai.olivetree.com
+  description: Smart Search AI (production)
+- url: https://staging-biblesearch-ai.olivetree.com
+  description: Smart Search AI (staging)
+- url: https://analytics.olivetree.com
+  description: Event analytics
+- url: https://privacy.olivetree.com
+  description: Privacy, consent, telemetry
+- url: https://speech.olivetree.com
+  description: Audio reading plan TTS
+- url: https://votd.olivetree.com
+  description: Verse of the Day images
+- url: https://cdn.olivetree.com
+  description: Static CDN assets
+- url: https://media.olivetree.com
+  description: Legacy media images
+- url: https://admin.olivetree.com
+  description: Internal admin API
+- url: https://help.olivetree.com
+  description: Help center (browser)
+- url: https://biblereader-android-df00f.firebaseio.com
+  description: Firebase Realtime Database
+tags:
+- name: Store
+  description: Store JSON API (/store/br5/app/json/store/)
+- name: Account
+  description: Account authentication (/store/br5/app/json/account/)
+- name: StoreXML
+  description: Legacy XML store API (/store/br5/app/in-app/xml/)
+- name: Legacy
+  description: Legacy PHP API (/api/)
+- name: Messages
+  description: In-app messaging (/api/messages/v1/)
+- name: SmartSearch
+  description: AI-powered Bible search
+- name: Sync
+  description: Annotation and library sync
+- name: Analytics
+  description: Event analytics and A/B testing
+- name: Privacy
+  description: Privacy, consent, and telemetry
+- name: Speech
+  description: TTS audio for reading plans
+- name: VOTD
+  description: Verse of the Day
+- name: CDN
+  description: Static CDN assets
+- name: Media
+  description: Legacy media host
+- name: Static
+  description: Static JSON assets on www
+- name: Admin
+  description: Internal admin endpoints
+- name: Browser
+  description: Browser-only redirect and web pages
+- name: Firebase
+  description: Firebase Realtime Database
+paths:
+  /store/br5/app/json/store/home:
+    post:
+      operationId: store_home
+      tags:
+      - Store
+      summary: Store home feed
+      security: &id001
+      - OTBearerAuth: []
+      - BasicAuth: []
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreHomeFeed'
+  /store/br5/app/json/store/banner:
+    post:
+      operationId: store_banner
+      tags:
+      - Store
+      summary: Sale banners
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleBanner'
+  /store/br5/app/json/store/featured_categories:
+    post:
+      operationId: store_featured_categories
+      tags:
+      - Store
+      summary: Featured categories
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesResponse'
+  /store/br5/app/json/store/library:
+    post:
+      operationId: store_library
+      tags:
+      - Store
+      summary: Library sync metadata
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/purchased:
+    post:
+      operationId: store_purchased
+      tags:
+      - Store
+      summary: Purchased products
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/user_wishlists:
+    post:
+      operationId: store_user_wishlists
+      tags:
+      - Store
+      summary: User wishlists
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishListData'
+  /store/br5/app/json/store/subscriptions_available:
+    post:
+      operationId: store_subscriptions_available
+      tags:
+      - Store
+      summary: Available subscriptions
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/first_run_subscriptions:
+    post:
+      operationId: store_first_run_subscriptions
+      tags:
+      - Store
+      summary: First-run subscription offers
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/first_run_interests:
+    post:
+      operationId: store_first_run_interests
+      tags:
+      - Store
+      summary: First-run interests
+      security: []
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/first_run_bible_list:
+    post:
+      operationId: store_first_run_bible_list
+      tags:
+      - Store
+      summary: First-run bible list
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/need_interests:
+    post:
+      operationId: store_need_interests
+      tags:
+      - Store
+      summary: Check if interests needed
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NeedInterestsResponse'
+  /store/br5/app/json/store/paid_features:
+    post:
+      operationId: store_paid_features
+      tags:
+      - Store
+      summary: Paid features list
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/paid_features_marketing:
+    post:
+      operationId: store_paid_features_marketing
+      tags:
+      - Store
+      summary: Paid features marketing
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionMarketing'
+  /store/br5/app/json/store/ads:
+    post:
+      operationId: store_ads
+      tags:
+      - Store
+      summary: Fullscreen ads
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/product_manifest:
+    post:
+      operationId: store_product_manifest
+      tags:
+      - Store
+      summary: Product manifest
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/support_delete_account:
+    post:
+      operationId: store_support_delete_account
+      tags:
+      - Store
+      summary: Request account deletion
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/register_subscription:
+    post:
+      operationId: store_register_subscription
+      tags:
+      - Store
+      summary: Register Google Play subscription
+      security: *id001
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                signupSource:
+                  type: string
+                receiptData:
+                  type: string
+                subscriptionProductId:
+                  type: string
+                platformToken:
+                  type: string
+                packageName:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/product/{productId}:
+    post:
+      operationId: store_product_detail
+      tags:
+      - Store
+      summary: Product detail
+      security: *id001
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail2'
+  /store/br5/app/json/store/product_set/{productIds}:
+    post:
+      operationId: store_product_set
+      tags:
+      - Store
+      summary: Multiple products by comma-separated IDs
+      security: *id001
+      parameters:
+      - name: productIds
+        in: path
+        required: true
+        schema:
+          type: string
+          example: 123,456
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/cat/{categoryId}:
+    post:
+      operationId: store_category
+      tags:
+      - Store
+      summary: Category product listing
+      security: *id001
+      parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/search:
+    post:
+      operationId: store_search
+      tags:
+      - Store
+      summary: Store/library search
+      security: *id001
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/library_details/{productIds}:
+    post:
+      operationId: store_library_details
+      tags:
+      - Store
+      summary: Library details for product IDs
+      security: *id001
+      parameters:
+      - name: productIds
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/giveaway/{code}:
+    post:
+      operationId: store_giveaway
+      tags:
+      - Store
+      summary: Redeem giveaway code
+      security: *id001
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/allow_subscription_purchase/{basePlanId}:
+    post:
+      operationId: store_allow_subscription_purchase
+      tags:
+      - Store
+      summary: Check subscription purchase allowed
+      security: *id001
+      parameters:
+      - name: basePlanId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllowSubscriptionPurchase'
+  /store/br5/app/json/store/subscription_variable_product_selection/{subscriptionId}:
+    post:
+      operationId: store_subscription_variable_product_selection
+      tags:
+      - Store
+      summary: Subscription volume product selection
+      security: *id001
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/store/modify_wishlist/add:
+    post:
+      operationId: store_wishlist_add
+      tags:
+      - Store
+      summary: Add product to wishlist
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: integer
+                  format: int64
+                wishlistId:
+                  type: integer
+                  format: int64
+              required:
+              - productId
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/modify_wishlist/remove:
+    post:
+      operationId: store_wishlist_remove
+      tags:
+      - Store
+      summary: Remove product from wishlist
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: integer
+                  format: int64
+                wishlistId:
+                  type: integer
+                  format: int64
+              required:
+              - productId
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/store/{dynamicPath}:
+    post:
+      operationId: store_dynamic_path
+      tags:
+      - Store
+      summary: Dynamic store path (resource guide, RC sections, etc.)
+      security: *id001
+      parameters:
+      - name: dynamicPath
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSet'
+  /store/br5/app/json/account/forgot_password:
+    post:
+      operationId: account_forgot_password
+      tags:
+      - Account
+      summary: Forgot password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+              required:
+              - email
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/account/account_signup:
+    post:
+      operationId: account_signup
+      tags:
+      - Account
+      summary: Create account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                pass:
+                  type: string
+                  format: password
+                install_id:
+                  type: string
+                supportsAccessToken:
+                  type: integer
+                subscribe_to_newsletter:
+                  type: string
+                implicit_newsletter_consent:
+                  type: string
+                first_name:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAuthResponse'
+  /store/br5/app/json/account/account_login:
+    post:
+      operationId: account_login
+      tags:
+      - Account
+      summary: Login with credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                pass:
+                  type: string
+                  format: password
+                install_id:
+                  type: string
+                supportsAccessToken:
+                  type: integer
+                subscribe_to_newsletter:
+                  type: string
+                implicit_newsletter_consent:
+                  type: string
+                first_name:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAuthResponse'
+  /store/br5/app/json/account/access_token:
+    post:
+      operationId: account_access_token
+      tags:
+      - Account
+      summary: Upgrade to access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                pass:
+                  type: string
+                  format: password
+                install_id:
+                  type: string
+                supportsAccessToken:
+                  type: integer
+                subscribe_to_newsletter:
+                  type: string
+                implicit_newsletter_consent:
+                  type: string
+                first_name:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAuthResponse'
+  /store/br5/app/json/account/refresh_token:
+    post:
+      operationId: account_refresh_token
+      tags:
+      - Account
+      summary: Refresh access token
+      security:
+      - OTBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAuthResponse'
+  /store/br5/app/json/account/generate_web_handoff_token:
+    post:
+      operationId: account_generate_web_handoff_token
+      tags:
+      - Account
+      summary: Generate web handoff token
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandoffToken'
+  /store/br5/app/json/account/subscription/{subscriptionId}:
+    post:
+      operationId: account_subscription
+      tags:
+      - Account
+      summary: Account subscription action
+      security: *id001
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/json/account/add_variable_subscription_selections/{selectionId}:
+    post:
+      operationId: account_add_variable_subscription_selections
+      tags:
+      - Account
+      summary: Add variable subscription selections
+      security: *id001
+      parameters:
+      - name: selectionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/in-app/xml/email_signup:
+    post:
+      operationId: xml_email_signup
+      tags:
+      - StoreXML
+      summary: Email signup with product list
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                token:
+                  type: string
+                bibles:
+                  type: string
+      responses:
+        '200':
+          description: XML response
+          content:
+            application/xml:
+              schema:
+                type: string
+  /store/br5/app/in-app/xml/register_products:
+    post:
+      operationId: xml_register_products
+      tags:
+      - StoreXML
+      summary: Register products
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: XML response
+          content:
+            application/xml:
+              schema:
+                type: string
+  /store/br5/app/in-app/xml/product_updates:
+    post:
+      operationId: xml_product_updates
+      tags:
+      - StoreXML
+      summary: Product updates
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericJsonObject'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app/in-app/xml/product_info:
+    post:
+      operationId: xml_product_info
+      tags:
+      - StoreXML
+      summary: Product info for ePub builder
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: XML response
+          content:
+            application/xml:
+              schema:
+                type: string
+  /store/br5/app/in-app/xml/download_products/{productIds}:
+    post:
+      operationId: xml_download_products
+      tags:
+      - StoreXML
+      summary: Download products
+      security: *id001
+      parameters:
+      - name: productIds
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Product download payload
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /store/br5/app/in-app/xml/download_reading_templates:
+    get:
+      operationId: xml_download_reading_templates
+      tags:
+      - StoreXML
+      summary: Download reading plan templates
+      security: []
+      parameters:
+      - name: templateIds
+        in: query
+        required: true
+        schema:
+          type: string
+          example: 1,2,3
+      responses:
+        '200':
+          description: Template download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/daily_reading_v2.php:
+    get:
+      operationId: legacy_daily_reading
+      tags:
+      - Legacy
+      summary: Daily reading plans API (GET template_versions)
+      security: []
+      parameters:
+      - &id002
+        name: type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - template_versions
+          - template_details
+          - search
+      - &id003
+        name: template_ids
+        in: query
+        schema:
+          type: string
+      - &id004
+        name: template_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+      - &id005
+        name: num_recommended
+        in: query
+        schema:
+          type: integer
+      - &id006
+        name: q
+        in: query
+        schema:
+          type: string
+      - name: supportsDevotionalPlans
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReadingTemplateVersionsResponse'
+    post:
+      operationId: legacy_daily_reading_post
+      tags:
+      - Legacy
+      summary: Daily reading plans API (POST template_details/search)
+      security: []
+      parameters:
+      - *id002
+      - *id003
+      - *id004
+      - *id005
+      - *id006
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                supportsDevotionalPlans:
+                  type: string
+                  example: '1'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReadingTemplateVersionsResponse'
+  /api/recommended.php:
+    post:
+      operationId: legacy_recommended
+      tags:
+      - Legacy
+      summary: Library recommendations
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/appirater_config.json:
+    get:
+      operationId: legacy_appirater_config
+      tags:
+      - Legacy
+      summary: App rating configuration
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppiraterConfig'
+  /votd/index.php:
+    get:
+      operationId: legacy_votd_index
+      tags:
+      - VOTD
+      summary: Verse of the day text
+      security: []
+      parameters:
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          example: '06_27'
+      - name: version
+        in: query
+        schema:
+          type: string
+          description: Bible version code
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerseOfTheDayResult'
+  /api/messages/v1/messages.php:
+    post:
+      operationId: messages_list
+      tags:
+      - Messages
+      summary: Messages API - messages.php
+      security: &id007
+      - HMACSignature: []
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+        description: HMAC signature of request body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessagesRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+  /api/messages/v1/devices.php:
+    post:
+      operationId: messages_devices
+      tags:
+      - Messages
+      summary: Messages API - devices.php
+      security: *id007
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+        description: HMAC signature of request body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRegistrationRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+  /api/messages/v1/metrics.php:
+    post:
+      operationId: messages_metrics
+      tags:
+      - Messages
+      summary: Messages API - metrics.php
+      security: *id007
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+        description: HMAC signature of request body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageMetricsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+  /api/v1/models:
+    get:
+      operationId: ai_models
+      tags:
+      - SmartSearch
+      summary: List AI models
+      security: []
+      servers:
+      - url: https://staging-biblesearch-ai.olivetree.com
+      responses:
+        '200':
+          description: Model list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AIModel'
+  /api/v1/status:
+    get:
+      operationId: ai_status
+      tags:
+      - SmartSearch
+      summary: AI usage status
+      security:
+      - OTBearerAuth: []
+      servers:
+      - url: https://biblesearch-ai.olivetree.com
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AICustomerUsage'
+  /api/v1/query:
+    post:
+      operationId: ai_query
+      tags:
+      - SmartSearch
+      summary: Smart search query
+      security: &id008
+      - OTBearerAuth: []
+      - HMACSignature: []
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+      servers:
+      - url: https://biblesearch-ai.olivetree.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIQueryRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIQueryResponse'
+  /api/v1/set-my-usage:
+    put:
+      operationId: ai_set_usage
+      tags:
+      - SmartSearch
+      summary: Report AI token usage
+      security: *id008
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+      servers:
+      - url: https://biblesearch-ai.olivetree.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AISetUsageRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /syncables/status.json:
+    get:
+      operationId: sync_status
+      tags:
+      - Sync
+      summary: Sync status and lock
+      security: *id001
+      servers:
+      - url: https://sync.olivetree.com
+      parameters:
+      - name: device_id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: do_not_lock
+        in: query
+        schema:
+          type: boolean
+      - name: managed_data_set
+        in: query
+        schema:
+          type: string
+          example: managed_annotations
+      - name: update_count
+        in: query
+        schema:
+          type: string
+      - name: sync_client_protocol_version
+        in: query
+        schema:
+          type: integer
+      - name: reader_version
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatusResponse'
+  /syncables/release_lock:
+    put:
+      operationId: sync_release_lock
+      tags:
+      - Sync
+      summary: Release sync lock
+      security: *id001
+      servers:
+      - url: https://sync.olivetree.com
+      parameters:
+      - name: device_id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: managed_data_set
+        in: query
+        schema:
+          type: string
+      - name: sync_client_protocol_version
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Lock released
+  /syncables/get_possibly_bad_annotation_data.json:
+    get:
+      operationId: sync_bad_annotation_data
+      tags:
+      - Sync
+      summary: Get possibly bad annotation data
+      security: *id001
+      servers:
+      - url: https://sync.olivetree.com
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/event_manifest:
+    get:
+      operationId: analytics_event_manifest
+      tags:
+      - Analytics
+      summary: Event manifest
+      security: []
+      servers: &id009
+      - url: https://analytics.olivetree.com
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/event_manifests/from/{fromDate}/to/{toDate}:
+    get:
+      operationId: analytics_event_manifest_range
+      tags:
+      - Analytics
+      summary: Event manifest date range
+      security: []
+      servers: *id009
+      parameters:
+      - name: fromDate
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2025-01-01'
+      - name: toDate
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/variant:
+    get:
+      operationId: analytics_get_variant
+      tags:
+      - Analytics
+      summary: Get A/B test variant
+      security: []
+      servers: *id009
+      parameters:
+      - name: experiment_id
+        in: query
+        required: true
+        schema:
+          type: integer
+      - name: install_id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: customer_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+    put:
+      operationId: analytics_set_variant
+      tags:
+      - Analytics
+      summary: Set A/B test variant
+      security: []
+      servers: *id009
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericJsonObject'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/events:
+    post:
+      operationId: analytics_events
+      tags:
+      - Analytics
+      summary: Batch report analytics events
+      security: *id007
+      servers: *id009
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEventsBatch'
+      responses:
+        '200':
+          description: Events accepted
+  /api/v1/session/start:
+    post:
+      operationId: privacy_session_start
+      tags:
+      - Privacy
+      summary: Start telemetry session
+      security: *id007
+      servers: &id010
+      - url: https://privacy.olivetree.com
+      parameters:
+      - name: signature
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacySessionStart'
+      responses:
+        '200':
+          description: Session started
+  /api/v1/consent/receipt:
+    post:
+      operationId: privacy_consent_receipt
+      tags:
+      - Privacy
+      summary: Submit consent receipt
+      security: []
+      servers: *id010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericJsonObject'
+      responses:
+        '200':
+          description: Receipt accepted
+  /api/v1/consent/location/settings:
+    get:
+      operationId: privacy_consent_location_get
+      tags:
+      - Privacy
+      summary: Get consent location settings
+      security: []
+      servers: *id010
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+    post:
+      operationId: privacy_consent_location_set
+      tags:
+      - Privacy
+      summary: Set consent location settings
+      security: []
+      servers: *id010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericJsonObject'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/subscription/log_usage:
+    post:
+      operationId: privacy_subscription_log_usage
+      tags:
+      - Privacy
+      summary: Log subscription usage
+      security: []
+      servers: *id010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericJsonObject'
+      responses:
+        '200':
+          description: Usage logged
+  /api/nowreading/{locale}/{path}:
+    get:
+      operationId: speech_nowreading
+      tags:
+      - Speech
+      summary: TTS now-reading audio header
+      security: []
+      servers: &id011
+      - url: https://speech.olivetree.com
+      parameters:
+      - name: locale
+        in: path
+        required: true
+        schema:
+          type: string
+          example: en-US
+      - name: path
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+  /api/messages/{locale}/completed:
+    get:
+      operationId: speech_completed_message
+      tags:
+      - Speech
+      summary: Reading plan completion audio
+      security: []
+      servers: *id011
+      parameters:
+      - name: locale
+        in: path
+        required: true
+        schema:
+          type: string
+          example: en-US
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+  /{month}/{day}/{productId}:
+    get:
+      operationId: votd_image
+      tags:
+      - VOTD
+      summary: Verse of the day background image
+      security: []
+      servers:
+      - url: https://votd.olivetree.com
+      parameters:
+      - name: month
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 12
+      - name: day
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 31
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /images/covers/{productId}.jpg:
+    get:
+      operationId: cdn_cover_jpg
+      tags:
+      - CDN
+      summary: Product cover image
+      security: []
+      servers: &id012
+      - url: https://cdn.olivetree.com
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: JPEG cover
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /images/covers/{productId}_stack.png:
+    get:
+      operationId: cdn_cover_stack
+      tags:
+      - CDN
+      summary: Book set stack cover image
+      security: []
+      servers: *id012
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: PNG stack cover
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+  /images/reading_plans/{templateId}_{size}.jpg:
+    get:
+      operationId: cdn_reading_plan_image
+      tags:
+      - CDN
+      summary: Reading plan template image
+      security: []
+      servers: *id012
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: size
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - hero
+          - carousel
+          - grid
+          - list
+          - portrait
+      responses:
+        '200':
+          description: JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /store/images40/{productId}.jpg:
+    get:
+      operationId: media_product_image
+      tags:
+      - Media
+      summary: Legacy product image (40px)
+      security: []
+      servers:
+      - url: https://media.olivetree.com
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /store/images/reading_plans/{templateId}_list.jpg:
+    get:
+      operationId: www_reading_plan_list_image
+      tags:
+      - CDN
+      summary: Reading plan list thumbnail on www
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: JPEG image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /static/app_assets/timeouts.json:
+    get:
+      operationId: static_timeouts
+      tags:
+      - Static
+      summary: App timeout configuration
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /projects/bookformatting/reading_template_for_product.php:
+    post:
+      operationId: admin_reading_template
+      tags:
+      - Admin
+      summary: Create reading template for product (internal)
+      security:
+      - JenkinsBasicAuth: []
+      servers:
+      - url: https://admin.olivetree.com
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+                  format: int64
+                create:
+                  type: string
+                  enum:
+                  - 'yes'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /store/br5/app_to_web_bridge.php:
+    get:
+      operationId: browser_app_to_web_bridge
+      tags:
+      - Browser
+      summary: Redirect to web store for purchase
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      parameters:
+      - name: platform
+        in: query
+        schema:
+          type: string
+      - name: ReaderVersion
+        in: query
+        schema:
+          type: string
+      - name: OEM
+        in: query
+        schema:
+          type: string
+      - name: clickId
+        in: query
+        schema:
+          type: string
+      - name: productid
+        in: query
+        schema:
+          type: integer
+      - name: login_handoff_token
+        in: query
+        schema:
+          type: string
+      responses:
+        '302':
+          description: Redirect to web store
+  /store/manage_subscriptions.php:
+    get:
+      operationId: browser_manage_subscriptions
+      tags:
+      - Browser
+      summary: Manage subscriptions web page
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+  /store/biblestudypacks.php:
+    get:
+      operationId: browser_bible_study_packs
+      tags:
+      - Browser
+      summary: Bible study packs web page
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+  /store/product.php:
+    get:
+      operationId: browser_product_page
+      tags:
+      - Browser
+      summary: Web product page (shared links)
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      parameters:
+      - name: productid
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+  /.json:
+    get:
+      operationId: firebase_root
+      tags:
+      - Firebase
+      summary: Firebase Realtime Database root
+      security: []
+      servers:
+      - url: https://biblereader-android-df00f.firebaseio.com
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /api/v1/metrics_and_diagnostics/ios:
+    get:
+      operationId: analytics_ios_metrics
+      tags:
+      - Analytics
+      summary: iOS metrics and diagnostics manifest
+      security: []
+      servers: *id009
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericJsonObject'
+  /hc/en-us/sections/360000034263-Android-OLIVE-TREE-BIBLE-APP-7-1:
+    get:
+      operationId: browser_help_articles
+      tags:
+      - Browser
+      summary: Help center Android articles
+      security: []
+      servers:
+      - url: https://help.olivetree.com
+      responses:
+        '200':
+          description: HTML help page
+          content:
+            text/html:
+              schema:
+                type: string
+  /hc/en-us/articles/210270643-Get-Started-Logging-In:
+    get:
+      operationId: browser_help_login
+      tags:
+      - Browser
+      summary: 'Help article: Get Started Logging In'
+      security: []
+      servers:
+      - url: https://help.olivetree.com
+      responses:
+        '200':
+          description: HTML help page
+          content:
+            text/html:
+              schema:
+                type: string
+  /eula:
+    get:
+      operationId: browser_eula
+      tags:
+      - Browser
+      summary: End user license agreement
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+  /privacy_policy:
+    get:
+      operationId: browser_privacy_policy
+      tags:
+      - Browser
+      summary: Privacy policy page
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+  /press/privacy.php:
+    get:
+      operationId: browser_press_privacy
+      tags:
+      - Browser
+      summary: Press privacy and terms page
+      security: []
+      servers:
+      - url: https://www.olivetree.com
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    OTBearerAuth:
+      type: apiKey
+      in: header
+      name: OTAuthorization
+      description: 'Bearer access or refresh token. Format: `Bearer {authentication_token}`'
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Fallback Basic auth with olivetree.com credentials (base64 user:pass)
+    HMACSignature:
+      type: apiKey
+      in: header
+      name: signature
+      description: HMAC hex digest of raw request body. Key derived from device telemetry.
+    JenkinsBasicAuth:
+      type: http
+      scheme: basic
+      description: Internal Jenkins credentials for admin endpoints
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          nullable: true
+    AccountSignupRequest:
+      type: object
+      properties:
+        user:
+          type: string
+          description: Email address
+        pass:
+          type: string
+          format: password
+        install_id:
+          type: string
+        supportsAccessToken:
+          type: integer
+          enum:
+          - 1
+        subscribe_to_newsletter:
+          type: string
+          enum:
+          - 'yes'
+          - 'no'
+        implicit_newsletter_consent:
+          type: string
+          enum:
+          - 'yes'
+        first_name:
+          type: string
+      required:
+      - user
+      - pass
+      - install_id
+    AccountAuthResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        authentication_token:
+          type: string
+        refresh_token:
+          type: string
+        refresh_token_invalid:
+          type: boolean
+        user_id:
+          type: integer
+          format: int64
+    HandoffToken:
+      type: object
+      properties:
+        token:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+    AuthorOrNarrator:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+    ProductFormEnum:
+      type: string
+      description: Product form discriminator
+      example: book
+      enum:
+      - book
+      - audio
+      - book_set
+      - subset
+      - subscription
+      - video
+      - study_bible
+    ProductListItem:
+      type: object
+      properties:
+        $type:
+          type: string
+        type:
+          type: string
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        publisher:
+          type: string
+        list_price:
+          type: string
+        our_price:
+          type: string
+        is_available:
+          type: boolean
+        isFree:
+          type: boolean
+        owns_product:
+          type: boolean
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        narrators:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        audioProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        textProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        bundledIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        inSubscriptionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        bookSetId:
+          type: string
+        newVersionProductId:
+          type: string
+        preferredAudioRelation:
+          type: string
+        webstoreCTAAvailable:
+          type: boolean
+        bookSetUpgradesAvailable:
+          type: array
+          items:
+            type: integer
+            format: int64
+        priceTierId:
+          type: string
+        image_url:
+          type: string
+    StoreItem:
+      type: object
+      properties:
+        $type:
+          type: string
+        id:
+          type: integer
+          format: int64
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        target:
+          type: string
+        image_url:
+          type: string
+        list_price:
+          type: string
+        our_price:
+          type: string
+        is_available:
+          type: boolean
+        isFree:
+          type: boolean
+        owns_product:
+          type: boolean
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        narrators:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        publisher:
+          type: string
+        bundledIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        audioProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        textProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        inSubscriptionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        forceBrowser:
+          type: boolean
+        webstoreCTAAvailable:
+          type: boolean
+    StoreRow:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        display:
+          type: string
+        see_all_target:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreItem'
+    StoreHomeFeed:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreRow'
+    SVFilterItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        description:
+          type: string
+        match_count:
+          type: integer
+        set_id:
+          type: integer
+    SVFilter:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SVFilterItem'
+    SVSortItem:
+      type: object
+      properties:
+        id:
+          type: string
+        display:
+          type: string
+        current:
+          type: boolean
+    ProductSet:
+      type: object
+      properties:
+        $type:
+          type: string
+        title:
+          type: string
+        page_index:
+          type: integer
+        pages:
+          type: integer
+        total_count:
+          type: integer
+        product_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SVFilter'
+        sort_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SVSortItem'
+        paid:
+          type: boolean
+        more_paid:
+          type: boolean
+    FeatureOfProduct:
+      type: object
+      properties:
+        feature_name:
+          type: string
+        feature_descr:
+          type: string
+        feature_icon_url:
+          type: string
+        feature_icon_dark_url:
+          type: string
+    RelatedProduct:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        list_price:
+          type: string
+        our_price:
+          type: string
+    ProductDetail2:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        publisher:
+          type: string
+        list_price:
+          type: string
+        our_price:
+          type: string
+        is_available:
+          type: boolean
+        isFree:
+          type: boolean
+        owns_product:
+          type: boolean
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        narrators:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorOrNarrator'
+        audioProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        textProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        audioDuration:
+          type: integer
+          format: int64
+        bookSetId:
+          type: integer
+          format: int64
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureOfProduct'
+        related:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedProduct'
+        coverImageUrl:
+          type: string
+        description:
+          type: string
+        sampleUrl:
+          type: string
+    WishList:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+    WishListData:
+      type: object
+      properties:
+        wishlists:
+          type: array
+          items:
+            $ref: '#/components/schemas/WishList'
+    CategoriesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreCategory'
+    StoreCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        target:
+          type: string
+        image_url:
+          type: string
+    SaleBanner:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        style:
+          type: string
+    CarouselItem:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        image_url:
+          type: string
+        target:
+          type: string
+    Carousel:
+      type: object
+      properties:
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarouselItem'
+    CtaDetail:
+      type: object
+      properties:
+        action:
+          type: string
+        border:
+          type: string
+        button_text:
+          type: string
+        subtitle:
+          type: string
+        title:
+          type: string
+        layout:
+          type: string
+        show_logo:
+          type: boolean
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        subtitle:
+          type: string
+        publisher:
+          type: string
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        list_price:
+          type: string
+        our_price:
+          type: string
+        is_available:
+          type: boolean
+        isFree:
+          type: boolean
+        owns_product:
+          type: boolean
+        coverImageUrl:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        bundledIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        textProductIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    VerseReferenceItem:
+      type: object
+      properties:
+        verse:
+          type: string
+        score:
+          type: string
+        verseText:
+          type: string
+          nullable: true
+    PromoColors:
+      type: object
+      properties:
+        lowerPaint:
+          type: string
+        midPaint:
+          type: string
+        upperPaint:
+          type: string
+        overPaintText:
+          type: string
+        textOverWhite:
+          type: string
+    PurchaseDetails:
+      type: object
+      properties:
+        backgroundColor:
+          type: string
+        backgroundDarkColor:
+          type: string
+        buttonColor:
+          type: string
+        buttonTextColor:
+          type: string
+        textColor:
+          type: string
+        annualUnderButtonText:
+          type: string
+    HeaderSection:
+      type: object
+      properties:
+        type:
+          type: string
+        heading:
+          type: string
+        body:
+          type: string
+        backgroundColor:
+          type: string
+        backgroundDarkColor:
+          type: string
+        trial_visibility:
+          type: string
+    TextSection:
+      type: object
+      properties:
+        type:
+          type: string
+        body:
+          type: string
+        backgroundColor:
+          type: string
+        backgroundDarkColor:
+          type: string
+    ProductSliderSection:
+      type: object
+      properties:
+        type:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+        brandLogoURL:
+          type: string
+        backgroundColor:
+          type: string
+        textColor:
+          type: string
+    SubscriptionLocations:
+      type: object
+      properties:
+        store_home:
+          $ref: '#/components/schemas/StoreHomeLocation'
+        main_menu:
+          $ref: '#/components/schemas/MainMenuLocation'
+        library_bar:
+          $ref: '#/components/schemas/LibraryBarLocation'
+        first_run:
+          $ref: '#/components/schemas/FirstRunLocation'
+        resource_guide:
+          $ref: '#/components/schemas/ResourceGuideLocation'
+        account_details:
+          $ref: '#/components/schemas/AccountDetailsLocation'
+    StoreHomeLocation:
+      type: object
+      properties:
+        flavor:
+          type: string
+        layout:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        subscription_set:
+          type: integer
+    MainMenuLocation:
+      type: object
+      properties:
+        flavor:
+          type: string
+        layout:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        subscription_set:
+          type: integer
+    LibraryBarLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        flavor:
+          type: string
+        subscription_set:
+          type: integer
+    FirstRunLocation:
+      type: object
+      properties:
+        flavor:
+          type: string
+        subscription_set:
+          type: integer
+    ResourceGuideLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        flavor:
+          type: string
+        header:
+          type: string
+        subtext:
+          type: string
+        action_text:
+          type: string
+        subscription_set:
+          type: integer
+    AccountDetailsLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        flavor:
+          type: string
+        header:
+          type: string
+        subtext:
+          type: string
+        action_text:
+          type: string
+        subscription_set:
+          type: integer
+    Feature:
+      type: object
+      properties:
+        feature_name:
+          type: string
+        feature_descr:
+          type: string
+        feature_icon_url:
+          type: string
+    MediumAds:
+      type: object
+      properties:
+        title:
+          type: string
+        target:
+          type: string
+        image_url:
+          type: string
+    WhatsIncludedProduct:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+    RelatedSet:
+      type: object
+      properties:
+        title:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedProduct'
+    BookSetVolume:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        volumeNumber:
+          type: integer
+    StoreBookSetVolume:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        owns_product:
+          type: boolean
+    CategoryResult:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreCategory'
+        title:
+          type: string
+    ProductSetArray:
+      type: object
+      properties:
+        $type:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSet'
+    GatherInterestResponse:
+      type: object
+      properties:
+        need_interests:
+          type: boolean
+    DailyReadingTemplateVersionsResponse:
+      type: object
+      additionalProperties: true
+      description: Reading plan template version data
+    AppiraterConfig:
+      type: object
+      additionalProperties: true
+      description: App rating prompt configuration
+    RegisterProductsRequest:
+      type: object
+      additionalProperties: true
+      description: Product registration form fields injected by client
+    EmailSignupRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        token:
+          type: string
+          description: Static signup token
+        bibles:
+          type: string
+          description: Comma-separated human-readable product names
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+    SyncReleaseLockResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        read:
+          type: boolean
+        title:
+          type: string
+        body:
+          type: string
+    MessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    AllowSubscriptionPurchase:
+      type: object
+      properties:
+        allow_subscription:
+          type: boolean
+    NeedInterestsResponse:
+      type: object
+      properties:
+        need_interests:
+          type: boolean
+    RegisterSubscriptionRequest:
+      type: object
+      properties:
+        signupSource:
+          type: string
+        receiptData:
+          type: string
+          description: Google Play purchase original JSON
+        subscriptionProductId:
+          type: string
+        platformToken:
+          type: string
+        packageName:
+          type: string
+    AIModel:
+      type: object
+      properties:
+        model_id:
+          type: string
+        model_source:
+          type: string
+        display:
+          type: string
+    ModelInfo:
+      type: object
+      properties:
+        model_id:
+          type: string
+        model_source:
+          type: string
+    AITokensUsage:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+        output_tokens:
+          type: integer
+        requests:
+          type: integer
+    UserLimits:
+      type: object
+      properties:
+        daily_requests:
+          type: integer
+        rolling_tokens:
+          type: integer
+    BSAI:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    Usage:
+      type: object
+      properties:
+        daily_requests_used:
+          type: integer
+        rolling_tokens_used:
+          type: integer
+    AICustomerUsage:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+        api_version:
+          type: string
+        api_minor_version:
+          type: string
+        status:
+          type: string
+        bsai:
+          $ref: '#/components/schemas/BSAI'
+        user_limits:
+          $ref: '#/components/schemas/UserLimits'
+        usage:
+          $ref: '#/components/schemas/Usage'
+    AiInfo:
+      type: object
+      properties:
+        latency_ms:
+          type: integer
+        modelInfo:
+          $ref: '#/components/schemas/ModelInfo'
+        usage:
+          $ref: '#/components/schemas/AITokensUsage'
+    Metadata:
+      type: object
+      properties:
+        ai_info:
+          $ref: '#/components/schemas/AiInfo'
+        api_version:
+          type: string
+        app:
+          type: string
+        cache_hit:
+          type: boolean
+        current_day_idx:
+          type: integer
+        daily_requests_used:
+          type: integer
+        host:
+          type: string
+        query_hash:
+          type: string
+        rolling_tokens_used:
+          type: integer
+        timestamp:
+          type: integer
+          format: int64
+    QueryResults:
+      type: object
+      properties:
+        verse_references:
+          type: array
+          items:
+            type: string
+        actual_search:
+          type: string
+        suggested:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+    SmartSearchError:
+      type: object
+      properties:
+        error:
+          type: string
+        errorCode:
+          type: string
+        usage_resets:
+          type: string
+    AIQueryResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          $ref: '#/components/schemas/QueryResults'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+    AIQueryRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        filters:
+          type: object
+          properties:
+            books:
+              type: array
+              items:
+                type: string
+                description: Bible book abbreviations
+      required:
+      - query
+    AISetUsageRequest:
+      type: object
+      properties:
+        input_tokens:
+          type: integer
+        output_tokens:
+          type: integer
+        requests:
+          type: integer
+    SyncStatusResponse:
+      type: object
+      properties:
+        customer:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              format: int64
+            master_sequence_numbers:
+              type: object
+              additionalProperties:
+                type: integer
+                format: int64
+        server:
+          type: object
+          properties:
+            system_status:
+              type: string
+              enum:
+              - online
+              - offline
+              - customer-locked
+            min_sync_version:
+              type: integer
+          additionalProperties: true
+    MessagesRequest:
+      type: object
+      properties:
+        install_id:
+          type: string
+      required:
+      - install_id
+    MessageMetricsRequest:
+      type: object
+      properties:
+        install_id:
+          type: string
+        message_id:
+          type: integer
+        metrics:
+          type: object
+          properties:
+            read_level:
+              type: integer
+    DeviceRegistrationRequest:
+      type: object
+      additionalProperties: true
+      description: Device registration JSON payload
+    VerseOfTheDayResult:
+      type: object
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+        url:
+          type: string
+        verses:
+          type: string
+        date:
+          type: string
+        productId:
+          type: integer
+          format: int64
+        timestamp:
+          type: integer
+          format: int64
+        image_url:
+          type: string
+        translation:
+          type: string
+    SubscriptionMarketing:
+      type: object
+      properties:
+        locations:
+          type: object
+          additionalProperties: true
+    Subscription:
+      type: object
+      properties:
+        subscriptionProductId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        abbrTitle:
+          type: string
+        flavor:
+          type: string
+        defaultBillingId:
+          type: integer
+          format: int64
+        trialEligible:
+          type: boolean
+        sections:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        purchaseDetails:
+          type: object
+          additionalProperties: true
+        promoColors:
+          type: object
+          additionalProperties: true
+    RecommendedProduct:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        list_price:
+          type: string
+        our_price:
+          type: string
+        owns_product:
+          type: boolean
+        isFree:
+          type: boolean
+        productForm:
+          $ref: '#/components/schemas/ProductFormEnum'
+        bundledIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    PrivacySessionStart:
+      type: object
+      additionalProperties: true
+      description: Telemetry session JSON blob
+    AnalyticsEventsBatch:
+      type: object
+      additionalProperties: true
+      description: Batch analytics events JSON
+    GenericJsonObject:
+      type: object
+      additionalProperties: true
+  parameters:
+    deviceId:
+      name: device_id
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Unique device install ID
+    installId:
+      name: install_id
+      in: query
+      schema:
+        type: string
+      description: App install identifier
+security: []
