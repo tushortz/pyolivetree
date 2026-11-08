@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ot.store.all_products` to walk every page of a product listing.
 - Smart Search `ot.ai.query` with book filters.
 - `DataSet` enum for sync data sets; plain names still work.
+- Convenience methods `ot.backup()`, `notes()`, `highlights()`, `clips()`, `status()`, `library()` (also on `AsyncOliveTree`).
+- `--refresh` CLI flag; `library` prints every owned product; clear error when no backup exists.
 - Automatic re-login and retry on expired tokens.
 
 ### Changed

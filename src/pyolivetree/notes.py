@@ -9,12 +9,16 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import sqlite3
 from collections.abc import Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pyolivetree.client import OliveTree
 from pyolivetree.constants import DATA_SETS, DataSet, data_set_name
+from pyolivetree.exceptions import OliveTreeError
+
+if TYPE_CHECKING:
+    from pyolivetree.client import OliveTree
 
 # annotation_type_id is a bit flag on the server. NOTE: mapped from a real account's data
 # (1 = typed note text, 16 = has highlighter_id, 256 = copied verse text); other bits may exist.
@@ -110,8 +114,16 @@ def annotations(db_path: str = "olivetree.db", kind: str | None = "note") -> lis
     Returns:
         Each row's ``datum`` plus ``type``, ``ref`` (see :func:`verse_ref`) and ``color``
         (highlighter name). Text is in ``content``, the verse label in ``title``.
+
+    Raises:
+        OliveTreeError: If ``db_path`` is not a backup yet (run :func:`backup` first).
     """
+    if not os.path.isfile(db_path):
+        raise OliveTreeError(f"No backup at {db_path!r}; run backup() first.")
     db = sqlite3.connect(db_path)
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE name='syncables'").fetchone():
+        db.close()
+        raise OliveTreeError(f"{db_path!r} is not a pyolivetree backup; run backup() first.")
     try:
         rows = db.execute(
             "SELECT datum FROM syncables WHERE table_name='annotations' AND deleted=0"

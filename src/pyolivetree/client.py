@@ -6,12 +6,14 @@ import json as jsonlib
 import os
 import platform
 import uuid
+from collections.abc import Iterable
 from typing import Any
 
 import httpx
 
+from pyolivetree import notes as _notes
 from pyolivetree._http import load_dotenv, parse_hmac_key, parse_response, sign_body
-from pyolivetree.constants import PLATFORM_ID, TOKEN_ERRORS, WWW
+from pyolivetree.constants import DATA_SETS, PLATFORM_ID, TOKEN_ERRORS, WWW, DataSet
 from pyolivetree.exceptions import OliveTreeAuthError, OliveTreeError
 from pyolivetree.resources import (
     AI,
@@ -35,6 +37,9 @@ class OliveTree:
     :attr:`sync`, :attr:`ai`, :attr:`reading`, :attr:`media`, :attr:`messages`,
     :attr:`telemetry`, :attr:`web` and :attr:`firebase`. The client logs in on the
     first call that needs it. :class:`AsyncOliveTree` offers the same API with ``await``.
+
+    Convenience methods cover the common jobs: :meth:`backup`, :meth:`notes`,
+    :meth:`highlights`, :meth:`clips`, :meth:`status` and :meth:`library`.
 
     Example:
         >>> with OliveTree() as ot:                       # doctest: +SKIP
@@ -144,6 +149,56 @@ class OliveTree:
         """Log in now if there is no token yet."""
         if not self.token:
             self.login()
+
+    # --- convenience --------------------------------------------------------
+
+    def backup(
+        self, db: str = "olivetree.db", data_sets: Iterable[DataSet | str] = DATA_SETS
+    ) -> dict[str, int]:
+        """Mirror your sync data into a local SQLite file, fetching only changes since the last run.
+
+        Args:
+            db: SQLite file to create or update.
+            data_sets: Data sets to back up (:class:`~pyolivetree.DataSet` members or names).
+
+        Returns:
+            Rows fetched per data set, e.g. ``{"annotations": 12, "library": 0, ...}``.
+        """
+        return _notes.backup(self, db, data_sets)
+
+    def notes(self, db: str = "olivetree.db", *, refresh: bool = True) -> list[dict]:
+        """Your notes, in Bible order.
+
+        Args:
+            db: Local backup file (created if missing).
+            refresh: Sync annotation changes into ``db`` first. ``False`` reads ``db`` offline.
+
+        Returns:
+            One dict per note: the row's fields (``title``, ``content``, ``created_date``, ...) plus
+            ``type``, ``ref`` (e.g. ``"John 3:16-17"``) and ``color``.
+        """
+        return self._annotations("note", db, refresh)
+
+    def highlights(self, db: str = "olivetree.db", *, refresh: bool = True) -> list[dict]:
+        """Your highlights, in Bible order. ``color`` is the highlighter name. See :meth:`notes`."""
+        return self._annotations("highlight", db, refresh)
+
+    def clips(self, db: str = "olivetree.db", *, refresh: bool = True) -> list[dict]:
+        """Verse text you saved, in Bible order. See :meth:`notes`."""
+        return self._annotations("clip", db, refresh)
+
+    def status(self) -> dict:
+        """Sync server status and latest change numbers. Same as ``sync.status()``."""
+        return self.sync.status()
+
+    def library(self) -> list[dict]:
+        """Every product you own, across all pages (``productId``, ``title``, ...)."""
+        return list(self.store.all_products(self.store.purchased()))
+
+    def _annotations(self, kind: str, db: str, refresh: bool) -> list[dict]:
+        if refresh:
+            _notes.backup(self, db, [DataSet.ANNOTATIONS])
+        return _notes.annotations(db, kind)
 
     def _take_tokens(self, data: dict) -> None:
         self.token = data.get("authentication_token") or self.token

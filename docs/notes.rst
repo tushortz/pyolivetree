@@ -8,15 +8,40 @@ Command line
 
    pyolivetree backup                   # mirror sync data into olivetree.db
    pyolivetree notes --out notes.md     # notes as Markdown, grouped by Bible book
+   pyolivetree notes --refresh          # sync changes first, then export
    pyolivetree highlights --out highlights.md
    pyolivetree clips                    # verse text you saved
    pyolivetree library                  # products you own (JSON)
    pyolivetree status                   # sync server status (JSON)
 
-``backup`` stores a cursor per data set, so re-running it only fetches changes.
+``backup`` stores a cursor per data set, so re-running it only fetches changes. ``notes``,
+``highlights`` and ``clips`` read the backup; add ``--refresh`` to sync first. Without a backup
+they exit with "run backup() first".
 
 Python
 ------
+
+The client has one method per command:
+
+.. code-block:: python
+
+   from pyolivetree import OliveTree, to_markdown
+
+   with OliveTree() as ot:
+       ot.backup()                   # all data sets -> olivetree.db
+       notes = ot.notes()            # syncs annotation changes, then reads the backup
+       highlights = ot.highlights()
+       clips = ot.clips(refresh=False)   # offline: backup only
+       ot.status()
+       owned = ot.library()          # every owned product
+
+   print(to_markdown(notes))
+
+Each item is the row's fields (``title``, ``content``, ``created_date``, ...) plus ``type``,
+``ref`` (e.g. ``"John 3:16-17"``) and ``color`` (highlighter name). See
+:meth:`pyolivetree.OliveTree.notes`.
+
+The same steps as functions:
 
 .. code-block:: python
 

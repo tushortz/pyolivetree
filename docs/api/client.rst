@@ -2,10 +2,10 @@ Client
 ======
 
 .. autoclass:: pyolivetree.OliveTree
-   :members: request, login, refresh, ensure_auth, close, token, refresh_token, hmac_key, app_fields
+   :members: backup, notes, highlights, clips, status, library, request, login, refresh, ensure_auth, close, token, refresh_token, hmac_key, app_fields
 
 .. autoclass:: pyolivetree.AsyncOliveTree
-   :members: request, login, refresh, ensure_auth, aclose, client
+   :members: backup, notes, highlights, clips, status, library, request, login, refresh, ensure_auth, aclose, client
 
 .. autoclass:: pyolivetree.async_client.AsyncGroup
 

@@ -98,6 +98,30 @@ class AsyncOliveTree:
         """Log in now if there is no token yet."""
         await asyncio.to_thread(self.client.ensure_auth)
 
+    async def backup(self, *args: Any, **kwargs: Any) -> dict[str, int]:
+        """Back up sync data to SQLite. See :meth:`OliveTree.backup`."""
+        return await asyncio.to_thread(self.client.backup, *args, **kwargs)
+
+    async def notes(self, *args: Any, **kwargs: Any) -> list[dict]:
+        """Your notes. See :meth:`OliveTree.notes`."""
+        return await asyncio.to_thread(self.client.notes, *args, **kwargs)
+
+    async def highlights(self, *args: Any, **kwargs: Any) -> list[dict]:
+        """Your highlights. See :meth:`OliveTree.highlights`."""
+        return await asyncio.to_thread(self.client.highlights, *args, **kwargs)
+
+    async def clips(self, *args: Any, **kwargs: Any) -> list[dict]:
+        """Saved verse text. See :meth:`OliveTree.clips`."""
+        return await asyncio.to_thread(self.client.clips, *args, **kwargs)
+
+    async def status(self) -> dict:
+        """Sync status. See :meth:`OliveTree.status`."""
+        return await asyncio.to_thread(self.client.status)
+
+    async def library(self) -> list[dict]:
+        """Every product you own. See :meth:`OliveTree.library`."""
+        return await asyncio.to_thread(self.client.library)
+
     async def request(self, method: str, url: str, **kwargs: Any) -> Any:
         """Send one request. Same arguments as :meth:`OliveTree.request`."""
         return await asyncio.to_thread(self.client.request, method, url, **kwargs)

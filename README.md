@@ -27,6 +27,20 @@ with OliveTree() as ot:              # logs in on first call that needs it
     ot.media.cover(36163)            # bytes (JPEG)
 ```
 
+### Convenience methods
+
+```python
+with OliveTree() as ot:
+    ot.backup()              # mirror sync data into olivetree.db; later runs fetch only changes
+    ot.notes()               # your notes in Bible order (syncs annotation changes first)
+    ot.highlights()          # highlights, with the highlighter color
+    ot.clips()               # verse text you saved
+    ot.status()              # sync server status and change numbers
+    ot.library()             # every product you own, across all pages
+```
+
+`notes`, `highlights` and `clips` take `db="olivetree.db"` and `refresh=True`; pass `refresh=False` to read the local backup offline. Each item is the row's fields (`title`, `content`, `created_date`, …) plus `type`, `ref` (e.g. `"John 3:16-17"`) and `color`. `pyolivetree.to_markdown(items)` renders any of them as Markdown.
+
 Async, with the same groups and methods:
 
 ```python
@@ -67,17 +81,18 @@ Calls that change your account: `sync.push`, `store.wishlist_*`, `store.register
 
 ```bash
 pyolivetree backup                   # mirror your sync data into olivetree.db (re-runs fetch only changes)
-pyolivetree notes --out notes.md     # your notes as Markdown, grouped by Bible book
+pyolivetree notes --out notes.md     # your notes as Markdown, grouped by Bible book (from the backup)
+pyolivetree notes --refresh          # sync changes first, then export
 pyolivetree highlights --out highlights.md
 pyolivetree clips                    # verse text you saved
-pyolivetree library                  # products you own
+pyolivetree library                  # every product you own (JSON)
+pyolivetree status                   # sync server status (JSON)
 ```
 
 ```python
-from pyolivetree import OliveTree, backup, annotations, to_markdown
+from pyolivetree import OliveTree, to_markdown
 with OliveTree() as ot:
-    backup(ot, "olivetree.db")
-print(to_markdown(annotations("olivetree.db", "note")))
+    print(to_markdown(ot.notes()))
 ```
 
 `olivetree.db` is SQLite: every row is in `syncables` (`table_name`, `datum` JSON).

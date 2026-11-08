@@ -53,10 +53,41 @@ def test_status(fake_client, capsys):
     assert json.loads(capsys.readouterr().out)["customer"]["master_sequence_numbers"]["annotations"] == 1
 
 
-def test_library(fake_client, rec, capsys):
-    rec.route("/store/purchased", httpx.Response(200, json={"total_count": 0}))
+def test_library_lists_every_product(fake_client, rec, capsys):
+    pages = [
+        "https://www.olivetree.com/store/br5/app/json/store/purchased/0",
+        "https://www.olivetree.com/store/br5/app/json/store/purchased/1",
+    ]
+    rec.route("/purchased/1", httpx.Response(200, json={"product_results": [{"productId": 2}]}))
+    rec.route(
+        "/store/purchased", httpx.Response(200, json={"product_results": [{"productId": 1}], "pages": pages})
+    )
     cli.main(["library"])
-    assert json.loads(capsys.readouterr().out) == {"total_count": 0}
+    assert json.loads(capsys.readouterr().out) == [{"productId": 1}, {"productId": 2}]
+
+
+def test_notes_refresh_flag_syncs_first(fake_client, tmp_path, rec, capsys):
+    db = str(tmp_path / "x.db")
+    cli.main(["notes", "--db", db, "--refresh"])
+    assert "## John 1:1" in capsys.readouterr().out
+    assert any(r.url.path == "/syncables.json" for r in rec.requests)
+
+
+def test_notes_without_backup_shows_error(fake_client, tmp_path, rec, capsys):
+    with pytest.raises(SystemExit) as e:
+        cli.main(["notes", "--db", str(tmp_path / "missing.db")])
+    assert e.value.code == 1
+    assert "run backup() first" in capsys.readouterr().err
+    assert rec.requests == []
+
+
+def test_notes_offline_reads_existing_backup(fake_client, tmp_path, rec, capsys):
+    db = str(tmp_path / "x.db")
+    cli.main(["backup", "--db", db])
+    capsys.readouterr()
+    n = len(rec.requests)
+    cli.main(["notes", "--db", db])
+    assert "## John 1:1" in capsys.readouterr().out and len(rec.requests) == n
 
 
 def test_backup_then_notes(fake_client, tmp_path, capsys):
