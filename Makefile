@@ -40,11 +40,11 @@ build: clean ## Build sdist and wheel into dist/
 check: build ## Validate dist/ for PyPI
 	uv run twine check dist/*
 
-publish-test: check ## Upload to TestPyPI (needs UV_PUBLISH_TOKEN for test.pypi.org)
-	uv publish --publish-url https://test.pypi.org/legacy/
+publish-test: check ## Upload to TestPyPI (token from ~/.pypirc [testpypi])
+	uv run twine upload --repository testpypi dist/*
 
-publish: check ## Upload to PyPI (needs UV_PUBLISH_TOKEN)
-	uv publish
+publish: check ## Upload to PyPI (token from ~/.pypirc [pypi])
+	uv run twine upload dist/*
 
 clean: ## Remove build outputs
 	rm -rf dist build docs/_build *.egg-info

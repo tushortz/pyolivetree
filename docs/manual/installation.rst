@@ -19,7 +19,7 @@ From source
 
 .. code-block:: bash
 
-   git clone <repository-url> pyolivetree
+   git clone https://github.com/tushortz/pyolivetree.git
    cd pyolivetree
    make install          # uv sync --extra dev --extra docs
 

@@ -55,7 +55,7 @@ async def main():
 asyncio.run(main())
 ```
 
-The 1.x names still work: `OliveTreeClient`, `AsyncOliveTreeClient`, `install_id=`, and `a`-prefixed async methods (`await client.store.ahome()`). See [examples/](examples/).
+The 1.x names still work: `OliveTreeClient`, `AsyncOliveTreeClient`, `install_id=`, and `a`-prefixed async methods (`await client.store.ahome()`). See [examples/](https://github.com/tushortz/pyolivetree/tree/main/examples).
 
 Data sets are `DataSet.ANNOTATIONS`, `LIBRARY`, `DAILY_READING` and `BOOKSHELF`. Every sync method and `backup()` also accept the plain name (`"library"`) or the server name (`"managed_library"`).
 
@@ -124,8 +124,8 @@ make docs          # Sphinx HTML in docs/_build/html
 make security      # dependency vulnerability scan
 make run           # run examples/sync_basic.py
 make build check   # build sdist/wheel and validate with twine
-make publish-test  # upload to TestPyPI (UV_PUBLISH_TOKEN)
-make publish       # upload to PyPI (UV_PUBLISH_TOKEN)
+make publish-test  # upload to TestPyPI (token in ~/.pypirc)
+make publish       # upload to PyPI (token in ~/.pypirc)
 ```
 
 Layout: `client.py` (auth, request, signing), `async_client.py`, `resources/` (one module per endpoint group),
